@@ -17,7 +17,7 @@ check_support.py — учёт entailment: делает проверку «цит
 CLI:
   python check_support.py support.json [--second support2.json] [--out support_report.json]
 """
-import argparse, json, sys
+import argparse, json
 
 VALID = {"yes", "partial", "no"}
 

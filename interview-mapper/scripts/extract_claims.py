@@ -12,7 +12,7 @@ extract_claims.py — вытащить цитаты из готового кар
 
 CLI: python extract_claims.py mapping.md [--interview "Дарья"] [--role "операции"] [--out claims.json]
 """
-import argparse, json, re, sys
+import argparse, json, re
 
 # Ловит коды: С3.2, С2.П (ВМДИ), а также К5/К10, А1, J1, C1, E1
 CELL_RE = re.compile(r"\*\*\s*([A-Za-zА-Яа-я]{1,2}\d{1,2}(?:\.[\wА-Яа-я]+)?)\s*[|｜]\s*([^*]+)\*\*")

@@ -43,5 +43,3 @@ ICLR'23). Multi-agent debate снижает галлюцинации (ICML'24). 
 - **DeTAILS**: нет дословно — выброс.
 - **Deterministic Quoting**: не доверять тексту цитаты, брать по ссылке.
 Наш `verify_quotes.py` — гибрид: чинит (fuzzy-перенос) + флагует/выбрасывает + всё прозрачно логирует.
-
-Полные ссылки — в `06_Деск-ресёрч/interview-mapping-methods/` (landscape + quote-verification).

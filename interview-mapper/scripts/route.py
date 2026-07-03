@@ -13,7 +13,7 @@ CLI (флаги или интерактивно):
   output:     mapping|insights|jobmap|persona|journey|memo|opportunity
   n:          число интервью (int)
 """
-import argparse, json, sys
+import argparse, json
 
 LENS = {  # (по респонденту, с учётом цели) → файл линзы
     "employee": "templates/org-mapping-vmdi.md",

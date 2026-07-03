@@ -27,8 +27,8 @@ def main():
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     text = read_text(a.input)
-    lines = [ln for ln in text.splitlines()]
-    numbered = "\n".join(f"L{i}: {ln}" for i, ln in enumerate(lines, 1) if ln.strip() != "" or True)
+    lines = text.splitlines()
+    numbered = "\n".join(f"L{i}: {ln}" for i, ln in enumerate(lines, 1))
     out = a.out or (os.path.splitext(a.input)[0] + "_nl.txt")
     open(out, "w", encoding="utf-8").write(numbered)
     print(f"Пронумеровано строк: {len(lines)} → {out}")

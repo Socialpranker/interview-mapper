@@ -7,7 +7,7 @@ render_board.py — автономный HTML-борд инсайтов из pro
 
 CLI: python render_board.py provenance.json [--out board.html] [--title "Инсайты: Музей"]
 """
-import argparse, json, html, os
+import argparse, json, html
 
 def get_clusters(data):
     if "provenance" in data:

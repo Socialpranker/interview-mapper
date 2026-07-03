@@ -14,6 +14,19 @@
 
 ---
 
+## Contents
+
+- [Why this exists](#why-this-exists)
+- [Pipeline](#pipeline)
+- [Two axes, not a pile of templates](#two-axes-not-a-pile-of-templates)
+- [Two language versions](#two-language-versions)
+- [Quickstart](#quickstart)
+- [Repository layout](#repository-layout)
+- [Dependencies](#dependencies)
+- [Honest limits](#honest-limits)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Why this exists
 
 "Summarize these interviews" pipelines quietly invent patterns and quotes. The failure modes are well documented: LLM-generated quotes are often **regenerated, not extracted** (~7.7% aren't in the source verbatim), **omissions outnumber fabrications**, a "quote" can be real yet **not support the claim it's attached to** (verbatim ≠ entailment), and subjective labels like eNPS **flip between runs** (LLM-as-judge flip-rate up to 56%).
@@ -30,7 +43,7 @@ Interview Mapper turns each of those into an explicit, auditable guardrail.
 | Ranks by frequency | **Frequency × criticality** + surfaces **role tensions** |
 | Opaque conclusions | **Full audit trail** insight→quote→line→interview + HTML board |
 
-Full rationale and citations: [`references/reliability.md`](./interview-mapper-en/references/reliability.md).
+Full rationale and citations: [`references/reliability.md`](./interview-mapper-en/references/reliability.md) (RU: [`interview-mapper/references/reliability.md`](./interview-mapper/references/reliability.md)). All references/templates are mirrored 1:1 between the two language folders.
 
 ## Pipeline
 
@@ -71,9 +84,11 @@ Then, in a session, just ask naturally:
 
 > "Analyze this employee interview — role, processes, risks, how they feel about the work. Back every conclusion with a quote."
 
-The skill runs S0→S7, and the scripts are also usable standalone:
+The skill runs S0→S7, and the scripts are also usable standalone — run them from inside the skill folder you installed (`interview-mapper/` or `interview-mapper-en/`):
 
 ```bash
+cd interview-mapper-en/   # or interview-mapper/ for the RU version
+
 # route the pipeline from the intake answers
 python scripts/route.py --goal org --respondent employee --output insights --n 6
 
@@ -90,6 +105,7 @@ python scripts/score_insights.py nuggets.json --k 3
 ```
 .
 ├── interview-mapper/          # RU skill (source)
+│   └── ...                    # same layout as interview-mapper-en/ below, mirrored 1:1
 ├── interview-mapper-en/       # EN skill (source)
 │   ├── SKILL.md               # orchestrator: S0–S7
 │   ├── templates/             # 6 lenses
@@ -114,6 +130,10 @@ This is a research preview. Read these before trusting output:
 - **Latent constructs** (tone, intent, eNPS) are where LLMs are weakest — always human candidates.
 - `n < k` interviews = a **pilot**, not a measurement; synthesis yields only a watchlist.
 - The machinery is complete and tested on toy data, but **not yet validated at scale** against a human baseline.
+
+## Contributing
+
+Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for the principles to preserve (grounding, verbatim ≠ support, human-in-the-loop) and dev checks.
 
 ## License
 

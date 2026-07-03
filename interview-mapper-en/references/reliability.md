@@ -43,5 +43,3 @@ Sources: PERC'25, AI&Society 2025, mental-health TA (2507.08002).
 - **DeTAILS**: not verbatim — discard.
 - **Deterministic Quoting**: don't trust the quote text, take it by reference.
 Our `verify_quotes.py` is a hybrid: it fixes (fuzzy transfer) + flags/discards + logs everything transparently.
-
-Full references — in `06_Desk-research/interview-mapping-methods/` (landscape + quote-verification).

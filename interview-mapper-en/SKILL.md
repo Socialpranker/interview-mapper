@@ -33,7 +33,7 @@ Then lock the route with a script:
 ### Axis 1 — Lenses (how to extract from ONE interview)
 | Lens | For whom | Template |
 |---|---|---|
-| Org-mapping (6 blocks · 40 codes, example codebook) | employee | `templates/org-mapping-vmdi.md` |
+| Org-mapping (6 blocks · 40 codes) | employee | `templates/org-mapping-vmdi.md` |
 | JTBD | customer (the "job"/choice) | `templates/jtbd.md` |
 | CustDev (Mom Test) | customer (problem discovery) | `templates/custdev.md` |
 | Expert | expert/stakeholder | `templates/expert.md` |
@@ -51,7 +51,7 @@ Then lock the route with a script:
 
 All lenses share one backbone (Framework Method, two layers: facts + analysis). Principle: **few artifacts, smart routing** — `N lenses × M outputs` cover `N×M` tasks. Don't spawn duplicates: for a new task, first check (lens + output).
 
-## Pipeline S1–S4
+## Pipeline S0.5–S4
 Details of each step — `references/pipeline.md`. In brief:
 
 ### S0.5 — Many interviews? Prepare in batch
@@ -107,7 +107,7 @@ Details: `references/synthesis.md`. In brief:
 Honestly: a pattern = ≥k distinct interviews with a verified quote. Too few interviews → watchlist only, don't sell as an insight. Frequency ≠ importance (keep the second axis — criticality); the gold is in tensions, not consensus.
 
 ## Human↔AI comparison (optional)
-If a human version exists — compare via `references/rubric.md` (cells × coverage 1–5 + discrepancy types).
+If a human version exists — compare via `references/rubric.md` (18 cells × coverage 1–5 + discrepancy types).
 The score is set by a human blind, not by the AI itself.
 
 ## Script index

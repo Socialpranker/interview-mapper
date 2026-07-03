@@ -7,7 +7,7 @@ with interview/line and a verified/support mark. Loads nothing from the network 
 
 CLI: python render_board.py provenance.json [--out board.html] [--title "Insights: Museum"]
 """
-import argparse, json, html, os
+import argparse, json, html
 
 def get_clusters(data):
     if "provenance" in data:

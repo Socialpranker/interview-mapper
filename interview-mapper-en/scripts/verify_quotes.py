@@ -23,7 +23,7 @@ Formats:
   claims.json: [{"cell":"К5","claim":"...","quote":"...","line":61}]  (line — optional)
 Output: JSON with a status for each quote.
 """
-import argparse, json, re, sys, unicodedata
+import argparse, json, re, unicodedata
 
 # ---------- fuzzy backend (rapidfuzz optional, difflib fallback) ----------
 try:
@@ -95,11 +95,6 @@ def lcs_coverage(needle: str, hay: str) -> float:
     """Share of the quote covered by the longest common fragment (0..1)."""
     if not needle:
         return 0.0
-    if _HAS_RF:
-        # LCSseq distance -> LCS length
-        d = _rf_lcs.distance(needle, hay)
-        lcs_len = (len(needle) + len(hay) - d) / 2  # not quite exact for seq, but a lower bound
-        # safer via SequenceMatcher longest block:
     sm = SequenceMatcher(None, needle, hay)
     total = sum(b.size for b in sm.get_matching_blocks())
     return min(1.0, total / max(1, len(needle)))

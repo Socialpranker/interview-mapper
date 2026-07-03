@@ -17,7 +17,7 @@ Thanks for your interest! This project is a Claude/Cowork **skill** plus stdlib-
 ## Dev checks
 ```bash
 python -m py_compile interview-mapper*/scripts/*.py   # must pass
-python scripts/route.py --goal org --respondent employee --n 3   # smoke test
+python interview-mapper-en/scripts/route.py --goal org --respondent employee --n 3   # smoke test
 ```
 
 ## Adding a lens or output

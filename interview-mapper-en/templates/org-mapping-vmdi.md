@@ -1,7 +1,7 @@
 # Lens: Employee Org-Mapping — VMDI codebook (6 blocks · 40 codes)
 
-**When:** interview with a VMDI employee following the employee guide. This is an example codebook (museum employees) — a REAL project codebook (not a reconstruction).
-**Unit:** code. Each code is filled in as **quote → What it reveals → → Recommendation**.
+**When:** interview with a VMDI employee following the employee guide. This is a REAL project codebook (museum employees, not a reconstruction).
+**Unit:** code. Each code is filled in as **quote → What it reveals → Recommendation**.
 **Output format per code:**
 ```
 **C3.2 | Incident vs pattern** [category: Incident / Pattern / Not mentioned]

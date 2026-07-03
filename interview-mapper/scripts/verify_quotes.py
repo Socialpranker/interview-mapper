@@ -23,7 +23,7 @@ CLI:
   claims.json: [{"cell":"К5","claim":"...","quote":"...","line":61}]  (line — опционально)
 Выход: JSON со статусом на каждую цитату.
 """
-import argparse, json, re, sys, unicodedata
+import argparse, json, re, unicodedata
 
 # ---------- fuzzy backend (rapidfuzz optional, difflib fallback) ----------
 try:
@@ -95,11 +95,6 @@ def lcs_coverage(needle: str, hay: str) -> float:
     """Доля цитаты, покрытая самым длинным общим фрагментом (0..1)."""
     if not needle:
         return 0.0
-    if _HAS_RF:
-        # LCSseq distance -> длина LCS
-        d = _rf_lcs.distance(needle, hay)
-        lcs_len = (len(needle) + len(hay) - d) / 2  # не совсем точно для seq, но нижняя оценка
-        # безопаснее через SequenceMatcher longest block:
     sm = SequenceMatcher(None, needle, hay)
     total = sum(b.size for b in sm.get_matching_blocks())
     return min(1.0, total / max(1, len(needle)))

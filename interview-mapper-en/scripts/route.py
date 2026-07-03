@@ -13,7 +13,7 @@ Values:
   output:     mapping|insights|jobmap|persona|journey|memo|opportunity
   n:          number of interviews (int)
 """
-import argparse, json, sys
+import argparse, json
 
 LENS = {  # (by respondent, considering the goal) → lens file
     "employee": "templates/org-mapping-vmdi.md",

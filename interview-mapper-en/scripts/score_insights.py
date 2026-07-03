@@ -17,7 +17,7 @@ Input nuggets.json — a list:
 
 CLI: python score_insights.py nuggets.json [--k 3] [--out insights_scored.json]
 """
-import argparse, json, sys
+import argparse, json
 from collections import defaultdict
 
 def main():

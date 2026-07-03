@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Here is a transcript of an interview with a museum employee (file transcript.txt). Analyze it — what the role is, the processes, the risks, how they feel about the work. Support every conclusion with a quote.",
-      "expected_output": "Mapping via the org-mapping lens: Layer 1 (К1-К10) + Layer 2 (А1-А8), each cell with a verified quote and line number; disputed analytical cells flagged; proofreading log.",
+      "expected_output": "Mapping via the org-mapping lens: 6 blocks, each cell (of 40 codes) with a verified quote and line number; disputed cells flagged; proofreading log.",
       "files": ["transcript.txt"]
     },
     {

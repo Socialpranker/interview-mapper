@@ -12,7 +12,7 @@ The line number is NOT required — verify_quotes finds it itself (see --emit-en
 
 CLI: python extract_claims.py mapping.md [--interview "Daria"] [--role "operations"] [--out claims.json]
 """
-import argparse, json, re, sys
+import argparse, json, re
 
 # Catches codes: С3.2, С2.П (VMDI), as well as К5/К10, А1, J1, C1, E1
 CELL_RE = re.compile(r"\*\*\s*([A-Za-zА-Яа-я]{1,2}\d{1,2}(?:\.[\wА-Яа-я]+)?)\s*[|｜]\s*([^*]+)\*\*")
