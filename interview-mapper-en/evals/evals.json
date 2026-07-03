@@ -1,0 +1,23 @@
+{
+  "skill_name": "interview-mapper",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Here is a transcript of an interview with a museum employee (file transcript.txt). Analyze it — what the role is, the processes, the risks, how they feel about the work. Support every conclusion with a quote.",
+      "expected_output": "Mapping via the org-mapping lens: Layer 1 (К1-К10) + Layer 2 (А1-А8), each cell with a verified quote and line number; disputed analytical cells flagged; proofreading log.",
+      "files": ["transcript.txt"]
+    },
+    {
+      "id": 2,
+      "prompt": "Analyze this custdev interview with a customer — what their problem is, what they've already tried, whether the pain is real. Don't make things up.",
+      "expected_output": "Mapping via the CustDev lens: facts vs opinions separated, strength of pain, readiness signals, hypothesis confirmed/refuted; quotes verified; rejected quotes shown.",
+      "files": ["custdev_interview.txt"]
+    },
+    {
+      "id": 3,
+      "prompt": "I have 6 coded interviews (folder mappings/). Build cross-interview insights — what's common, where they diverge, what's critical.",
+      "expected_output": "Nuggets → clusters → insight cards; each with prevalence (X of N), verified evidence from different interviews, tensions, counter-evidence; a pattern only with triangulation ≥k; watchlist separately.",
+      "files": ["mappings/"]
+    }
+  ]
+}

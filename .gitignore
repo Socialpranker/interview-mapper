@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated pipeline artifacts (regenerated per run)
+*_nl.txt
+*_claims.json
+*_nuggets.json
+scored.json
+provenance.json
+board.html
+manifest.json
+consensus.json
+adjudication.*
+
+# Editors
+.vscode/
+.idea/

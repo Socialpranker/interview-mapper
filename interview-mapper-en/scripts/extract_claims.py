@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""
+extract_claims.py — pull quotes from a finished mapping (.md) into claims.json.
+
+Removes manual gluing: parses our mapping format and collects a list of quotes for verify_quotes.py.
+Recognizes:
+  - cell headers: **К5 | Системы...**, **А1 | eNPS...**, ### СЛОЙ ...
+  - quotes in guillemets: «...» (on any lines, most often in _italic_ «Цитата: «...»» or _«...» (L61)_)
+  - optional line number in the quote: (L61) / (61)
+
+The line number is NOT required — verify_quotes finds it itself (see --emit-enriched).
+
+CLI: python extract_claims.py mapping.md [--interview "Daria"] [--role "operations"] [--out claims.json]
+"""
+import argparse, json, re, sys
+
+# Catches codes: С3.2, С2.П (VMDI), as well as К5/К10, А1, J1, C1, E1
+CELL_RE = re.compile(r"\*\*\s*([A-Za-zА-Яа-я]{1,2}\d{1,2}(?:\.[\wА-Яа-я]+)?)\s*[|｜]\s*([^*]+)\*\*")
+QUOTE_RE = re.compile(r"«([^»]{4,})»")
+LINE_RE = re.compile(r"\(L?(\d{1,4})\)")
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("mapping")
+    ap.add_argument("--interview", default=None)
+    ap.add_argument("--role", default=None)
+    ap.add_argument("--out", default=None)
+    a = ap.parse_args()
+
+    text = open(a.mapping, encoding="utf-8").read()
+    lines = text.splitlines()
+    cur_cell, cur_title, cur_claimtext = None, None, ""
+    claims = []
+    for ln in lines:
+        mcell = CELL_RE.search(ln)
+        if mcell:
+            cur_cell = mcell.group(1).strip()
+            cur_title = mcell.group(2).strip()
+            cur_claimtext = ""
+            continue
+        # accumulate the cell text as a «claim» (without quote lines)
+        if cur_cell and "«" not in ln and ln.strip() and not ln.startswith(("#", "---", "**", "_Цитата")):
+            if len(cur_claimtext) < 160:
+                cur_claimtext = (cur_claimtext + " " + ln.strip()).strip()
+        for mq in QUOTE_RE.finditer(ln):
+            quote = mq.group(1).strip()
+            mline = LINE_RE.search(ln)
+            claim = {"cell": cur_cell or "?", "title": cur_title or "",
+                     "claim": cur_claimtext[:160], "quote": quote}
+            if mline:
+                claim["line"] = int(mline.group(1))
+            if a.interview:
+                claim["interview"] = a.interview
+            if a.role:
+                claim["role"] = a.role
+            claims.append(claim)
+
+    out = a.out or (re.sub(r"\.md$", "", a.mapping) + "_claims.json")
+    open(out, "w", encoding="utf-8").write(json.dumps(claims, ensure_ascii=False, indent=2))
+    print(f"Quotes extracted: {len(claims)} from {a.mapping} → {out}")
+    # brief per-cell summary
+    from collections import Counter
+    c = Counter(x["cell"] for x in claims)
+    print("by cell:", dict(c))
+
+if __name__ == "__main__":
+    main()
