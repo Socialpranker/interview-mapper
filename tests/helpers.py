@@ -12,7 +12,7 @@ SCRIPT_DIRS = {
 LANGS = ("ru", "en")
 
 # Локализованные поля выходов — исключать при сравнении RU vs EN
-LOCALIZED_KEYS = {"note", "caveats"}
+LOCALIZED_KEYS = {"note", "caveats", "pipeline"}
 
 
 def load_script(lang, name):
