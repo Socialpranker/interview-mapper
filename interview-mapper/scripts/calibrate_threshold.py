@@ -20,7 +20,22 @@ import argparse, json, subprocess, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 VERIFY = os.path.join(HERE, "verify_quotes.py")
 
+
+def _read_json(path):
+    """Читает JSON-файл; битый JSON или отсутствие файла → внятная ошибка, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — строка {e.lineno}, колонка {e.colno} ({e.msg})")
+
+
 def run_verify(transcript, claims, threshold, min_cov):
+    """Прогоняет verify_quotes.py сабпроцессом на заданном пороге и возвращает results."""
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
         json.dump(claims, f, ensure_ascii=False)
         cpath = f.name
@@ -30,10 +45,13 @@ def run_verify(transcript, claims, threshold, min_cov):
              "--threshold", str(threshold), "--min-coverage", str(min_cov)],
             capture_output=True, text=True, check=True).stdout
         return json.loads(out)["results"]
+    except subprocess.CalledProcessError as e:
+        sys.exit(f"error: verify_quotes.py failed: {e.stderr or e}")
     finally:
         os.unlink(cpath)
 
 def prf(gold, results):
+    """Считает precision/recall/F1 по паре (gold-разметка, результаты verify_quotes)."""
     tp = fp = tn = fn = 0
     for g, r in zip(gold, results):
         pred = r["status"].startswith("verified")
@@ -49,6 +67,7 @@ def prf(gold, results):
                recall=round(rec, 3), f1=round(f1, 3))
 
 def main():
+    """CLI: перебирает пороги, считает P/R/F1 против gold-set и рекомендует лучший."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--transcript", required=True)
     ap.add_argument("--gold", required=True)
@@ -60,7 +79,7 @@ def main():
                     help="Выбирать порог по precision (меньше ложных цитат), не по F1")
     a = ap.parse_args()
 
-    gold = json.load(open(a.gold, encoding="utf-8"))
+    gold = _read_json(a.gold)
     claims = [{"cell": "gold", "claim": "", "quote": g["quote"]} for g in gold]
 
     rows, best = [], None

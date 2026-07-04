@@ -9,14 +9,27 @@ verified проставит verify_quotes.py.
 
 CLI: python extract_nuggets.py mapping.md --interview "Дарья" --role "операции" [--out nuggets.json]
 """
-import argparse, json, re
+import argparse, json, re, sys
 
 # Ловит коды: С3.2, С2.П (ВМДИ), а также К5/К10, А1, J1, C1, E1
 CELL_RE = re.compile(r"\*\*\s*([A-Za-zА-Яа-я]{1,2}\d{1,2}(?:\.[\wА-Яа-я]+)?)\s*[|｜]\s*([^*]+)\*\*")
 QUOTE_RE = re.compile(r"«([^»]{4,})»")
 LINE_RE = re.compile(r"\(L?(\d{1,4})\)")
 
+
+def _read_text(path):
+    """Читает текстовый файл или завершает работу с внятной ошибкой."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+
+
 def main():
+    """CLI: собирает из .md-картирования заготовки наггетов для синтеза (S5)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("mapping")
     ap.add_argument("--interview", required=True)
@@ -24,7 +37,7 @@ def main():
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
 
-    text = open(a.mapping, encoding="utf-8").read()
+    text = _read_text(a.mapping)
     cur_cell, cur_title, obs = None, None, ""
     nuggets, idx = [], 0
     for ln in text.splitlines():

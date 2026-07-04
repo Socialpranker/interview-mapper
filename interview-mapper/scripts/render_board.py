@@ -7,9 +7,24 @@ render_board.py — автономный HTML-борд инсайтов из pro
 
 CLI: python render_board.py provenance.json [--out board.html] [--title "Инсайты: Музей"]
 """
-import argparse, json, html
+import argparse, json, html, sys
+
+
+def _read_json(path):
+    """Читает JSON-файл; битый JSON или отсутствие файла → внятная ошибка, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — строка {e.lineno}, колонка {e.colno} ({e.msg})")
+
 
 def get_clusters(data):
+    """Достаёт список кластеров либо из provenance.json, либо из scored.json."""
     if "provenance" in data:
         return data["provenance"]
     return data.get("clusters", [])
@@ -80,12 +95,13 @@ draw();
 </script></html>"""
 
 def main():
+    """CLI: собирает автономный HTML-борд инсайтов из provenance/scored JSON."""
     ap = argparse.ArgumentParser()
     ap.add_argument("data")
     ap.add_argument("--out", default="board.html")
     ap.add_argument("--title", default="Инсайты из интервью")
     a = ap.parse_args()
-    data = json.load(open(a.data, encoding="utf-8"))
+    data = _read_json(a.data)
     clusters = get_clusters(data)
     n_iv = (data.get("summary", {}).get("insights", {}) or {}).get("total_interviews", "?")
     sub = f"кластеров: {len(clusters)} · интервью: {n_iv} · зелёный=инсайт, жёлтый=watchlist, серый=weak"

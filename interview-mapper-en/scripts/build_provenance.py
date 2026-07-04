@@ -14,13 +14,28 @@ Output: provenance.json (machine-readable graph) + brief console.
 
 CLI: python build_provenance.py --insights scored.json [--support sup.json] [--verify q.json] [--out provenance.json]
 """
-import argparse, json
+import argparse, json, sys
+
+
+def _read_json(path):
+    """Read a JSON file; broken JSON or a missing file → a clear error, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — line {e.lineno}, column {e.colno} ({e.msg})")
+
 
 def index_by_quote(path, field_map):
+    """Indexes records from an (optional) JSON output by (cell, quote prefix)."""
     d = {}
     if not path:
         return d
-    data = json.load(open(path, encoding="utf-8"))
+    data = _read_json(path)
     rows = data.get("results", data) if isinstance(data, dict) else data
     for r in rows:
         key = (r.get("cell"), (r.get("quote") or "")[:60])
@@ -28,6 +43,7 @@ def index_by_quote(path, field_map):
     return d
 
 def main():
+    """CLI: joins score_insights/check_support/verify_quotes into a single provenance graph."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--insights", required=True)
     ap.add_argument("--support", default=None)
@@ -35,7 +51,7 @@ def main():
     ap.add_argument("--out", default="provenance.json")
     a = ap.parse_args()
 
-    scored = json.load(open(a.insights, encoding="utf-8"))
+    scored = _read_json(a.insights)
     sup = index_by_quote(a.support, {"support": "support"})
     ver = index_by_quote(a.verify, {"verify_status": "status", "line_found": "line_found"})
 

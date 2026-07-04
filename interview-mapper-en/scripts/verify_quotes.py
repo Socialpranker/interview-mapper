@@ -23,7 +23,7 @@ Formats:
   claims.json: [{"cell":"К5","claim":"...","quote":"...","line":61}]  (line — optional)
 Output: JSON with a status for each quote.
 """
-import argparse, json, re, unicodedata
+import argparse, json, re, sys, unicodedata
 
 # ---------- fuzzy backend (rapidfuzz optional, difflib fallback) ----------
 try:
@@ -33,6 +33,30 @@ try:
 except Exception:
     _HAS_RF = False
 from difflib import SequenceMatcher
+
+
+def _read_text(path):
+    """Read a text file, or exit with a clear error."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+
+
+def _read_json(path):
+    """Read a JSON file; broken JSON or a missing file → a clear error, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — line {e.lineno}, column {e.colno} ({e.msg})")
 
 FILLERS = {
     # ru
@@ -44,6 +68,7 @@ FILLERS = {
 }
 
 def strip_accents(s: str) -> str:
+    """Strips diacritics via NFKD decomposition."""
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
 
 def normalize(s: str) -> str:
@@ -100,6 +125,7 @@ def lcs_coverage(needle: str, hay: str) -> float:
     return min(1.0, total / max(1, len(needle)))
 
 def verify_one(quote, lines, norm_full, line_index, threshold, min_cov, window, claimed_line):
+    """Verifies a single quote via the exact → fuzzy → rejected cascade."""
     qn = normalize(quote)
     if not qn:
         return {"status": "empty", "score": 0}
@@ -133,6 +159,7 @@ def verify_one(quote, lines, norm_full, line_index, threshold, min_cov, window, 
             "line_found": None, "matched": matched}
 
 def window_text(lines, center_line, k):
+    """Returns a ±k line window around the claimed line (or the whole text if the line isn't found)."""
     nums = [ln for ln, _ in lines]
     if center_line not in nums:
         return " ".join(t for _, t in lines)
@@ -154,17 +181,20 @@ def build_index(lines):
     return " ".join(parts), index
 
 def locate_line(pos, index):
+    """Given a position in the normalized full text, finds the original line number."""
     for start, end, ln in index:
         if start <= pos <= end:
             return ln
     return index[-1][2] if index else None
 
 def line_ok(found, claimed, k):
+    """True/False whether the found line falls within ±k of the claimed line; None if there's nothing to compare."""
     if claimed is None or found is None:
         return None
     return abs(found - claimed) <= k
 
 def main():
+    """CLI: parses arguments, verifies all quotes, and prints/writes the result."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--transcript", required=True)
     ap.add_argument("--claims", required=True, help="JSON: list of {cell,claim,quote,line?}")
@@ -179,8 +209,8 @@ def main():
                          "The model must NOT guess the line number — the script sets it.")
     a = ap.parse_args()
 
-    text = open(a.transcript, encoding="utf-8").read()
-    claims = json.load(open(a.claims, encoding="utf-8"))
+    text = _read_text(a.transcript)
+    claims = _read_json(a.claims)
     lines = parse_lines(text)
     norm_full, index = build_index(lines)
 

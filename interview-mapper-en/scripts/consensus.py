@@ -31,7 +31,22 @@ LABELS = {  # known label dictionaries for vote normalization
     "enps": {"промоутер", "нейтрал", "детрактор", "promoter", "neutral", "detractor"},
 }
 
+
+def _read_json(path):
+    """Read a JSON file; broken JSON or a missing file → a clear error, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — line {e.lineno}, column {e.colno} ({e.msg})")
+
+
 def norm_label(s):
+    """Normalizes a label: lowercase, first word, punctuation stripped."""
     if not s:
         return None
     t = re.sub(r"[^\wа-яё]+", " ", str(s).lower()).strip()
@@ -39,7 +54,8 @@ def norm_label(s):
     return t
 
 def load_run(path):
-    d = json.load(open(path, encoding="utf-8"))
+    """Loads one mapping run (json) into the shape {cell: {label, text}}."""
+    d = _read_json(path)
     out = {}
     for cell, v in d.items():
         if isinstance(v, dict):
@@ -60,6 +76,7 @@ def text_stability(texts):
     return sum(sims) / len(sims) if sims else 1.0
 
 def weighted_vote(labels, weights):
+    """Weighted label vote: returns (winning label, agreement level, share)."""
     tally = Counter()
     for lab, w in zip(labels, weights):
         if lab:
@@ -80,6 +97,7 @@ def weighted_vote(labels, weights):
     return top, agree, round(share, 2)
 
 def main():
+    """CLI: compares N mapping runs and flags divergent cells for a human."""
     ap = argparse.ArgumentParser()
     ap.add_argument("runs", nargs="+", help="JSON run files (>=2)")
     ap.add_argument("--weights", default=None, help="comma-separated, one per run")

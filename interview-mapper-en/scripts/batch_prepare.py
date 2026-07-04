@@ -7,23 +7,32 @@ Lets you run a pool of N interviews without manual fuss. The mappings themselves
 
 CLI: python batch_prepare.py /path/to/transcripts [--out manifest.json]
 """
-import argparse, json, os, re, glob
+import argparse, json, os, re, glob, sys
 
 def read_text(path):
+    """Reads .txt or .docx (if python-docx is installed); OSError → a clear error, exit 1."""
     if path.lower().endswith(".docx"):
         try:
             import docx
         except Exception:
             return None  # mark in the manifest as requiring conversion
         return "\n".join(p.text for p in docx.Document(path).paragraphs)
-    return open(path, encoding="utf-8").read()
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
 
 def interview_name(path):
+    """Extracts a human-readable interview name from the transcript's filename."""
     base = os.path.splitext(os.path.basename(path))[0]
     base = re.sub(r"[_\-]*(расшифровка|вычитано|интервью|nl|по спикерам).*$", "", base, flags=re.I)
     return base.strip(" —_-") or base
 
 def main():
+    """CLI: numbers the lines of every transcript in the folder and writes a manifest."""
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
     ap.add_argument("--out", default=None)

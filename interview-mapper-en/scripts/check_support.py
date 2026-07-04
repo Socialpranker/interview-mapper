@@ -17,24 +17,40 @@ the script flags judge disagreements → to a human.
 CLI:
   python check_support.py support.json [--second support2.json] [--out support_report.json]
 """
-import argparse, json
+import argparse, json, sys
 
 VALID = {"yes", "partial", "no"}
 
+
+def _read_json(path):
+    """Read a JSON file; broken JSON or a missing file → a clear error, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — line {e.lineno}, column {e.colno} ({e.msg})")
+
+
 def norm(s):
+    """Normalizes a support verdict: lowercased string, or 'missing' if None."""
     return (str(s).strip().lower() if s is not None else "missing")
 
 def main():
+    """CLI: aggregates support verdicts, catches the dangerous verbatim-but-unsupported class."""
     ap = argparse.ArgumentParser()
     ap.add_argument("support")
     ap.add_argument("--second", default=None, help="Second independent run of verdicts (for judge-2)")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
 
-    items = json.load(open(a.support, encoding="utf-8"))
+    items = _read_json(a.support)
     second = {}
     if a.second:
-        for x in json.load(open(a.second, encoding="utf-8")):
+        for x in _read_json(a.second):
             second[(x.get("cell"), x.get("quote"))] = norm(x.get("support"))
 
     rows, missing, unsupported, dangerous, judge_split = [], [], [], [], []

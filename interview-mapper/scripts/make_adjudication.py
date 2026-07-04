@@ -10,23 +10,39 @@ make_adjudication.py — карточки для человека по спор�
 
 CLI: python make_adjudication.py consensus.json run1.json run2.json [run3.json ...] [--out adjudication.md]
 """
-import argparse, json, re
+import argparse, json, re, sys
+
+
+def _read_json(path):
+    """Читает JSON-файл; битый JSON или отсутствие файла → внятная ошибка, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — строка {e.lineno}, колонка {e.colno} ({e.msg})")
+
 
 def load_run(path):
-    d = json.load(open(path, encoding="utf-8"))
+    """Загружает один прогон картирования (json) в вид {cell: {label, text}}."""
+    d = _read_json(path)
     out = {}
     for cell, v in d.items():
         out[cell] = v if isinstance(v, dict) else {"label": None, "text": str(v)}
     return out
 
 def main():
+    """CLI: готовит карточки адъюдикации по флагнутым ячейкам из consensus.py."""
     ap = argparse.ArgumentParser()
     ap.add_argument("consensus")
     ap.add_argument("runs", nargs="+")
     ap.add_argument("--out", default="adjudication.md")
     a = ap.parse_args()
 
-    cons = json.load(open(a.consensus, encoding="utf-8"))
+    cons = _read_json(a.consensus)
     flagged = cons.get("summary", {}).get("flagged", [])
     runs = [load_run(p) for p in a.runs]
 

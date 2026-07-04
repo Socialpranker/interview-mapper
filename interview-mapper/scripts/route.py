@@ -43,6 +43,7 @@ OUTPUT = {
 K = 3  # порог триангуляции по умолчанию
 
 def choose_lens(goal, respondent):
+    """Выбирает файл линзы по цели и типу респондента (цель обычно сильнее «кто»)."""
     # цель-переопределение сильнее, кроме орг/сотрудника
     if goal in LENS_BY_GOAL and not (goal == "org"):
         return LENS_BY_GOAL[goal]
@@ -51,6 +52,7 @@ def choose_lens(goal, respondent):
     return LENS.get(respondent, "templates/org-mapping-vmdi.md")
 
 def main():
+    """CLI: строит детерминированный план пайплайна по интейку (цель/респондент/выход/N)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--goal", required=True)
     ap.add_argument("--respondent", required=True)

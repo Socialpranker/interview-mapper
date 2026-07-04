@@ -14,13 +14,28 @@ build_provenance.py — единый аудит-след: инсайт → кл�
 
 CLI: python build_provenance.py --insights scored.json [--support sup.json] [--verify q.json] [--out provenance.json]
 """
-import argparse, json
+import argparse, json, sys
+
+
+def _read_json(path):
+    """Читает JSON-файл; битый JSON или отсутствие файла → внятная ошибка, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — строка {e.lineno}, колонка {e.colno} ({e.msg})")
+
 
 def index_by_quote(path, field_map):
+    """Индексирует записи из (опционального) JSON-выхода по (cell, префикс цитаты)."""
     d = {}
     if not path:
         return d
-    data = json.load(open(path, encoding="utf-8"))
+    data = _read_json(path)
     rows = data.get("results", data) if isinstance(data, dict) else data
     for r in rows:
         key = (r.get("cell"), (r.get("quote") or "")[:60])
@@ -28,6 +43,7 @@ def index_by_quote(path, field_map):
     return d
 
 def main():
+    """CLI: джойнит score_insights/check_support/verify_quotes в единый provenance-граф."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--insights", required=True)
     ap.add_argument("--support", default=None)
@@ -35,7 +51,7 @@ def main():
     ap.add_argument("--out", default="provenance.json")
     a = ap.parse_args()
 
-    scored = json.load(open(a.insights, encoding="utf-8"))
+    scored = _read_json(a.insights)
     sup = index_by_quote(a.support, {"support": "support"})
     ver = index_by_quote(a.verify, {"verify_status": "status", "line_found": "line_found"})
 

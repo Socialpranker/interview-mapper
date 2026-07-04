@@ -31,7 +31,22 @@ LABELS = {  # известные словари ярлыков для норма
     "enps": {"промоутер", "нейтрал", "детрактор", "promoter", "neutral", "detractor"},
 }
 
+
+def _read_json(path):
+    """Читает JSON-файл; битый JSON или отсутствие файла → внятная ошибка, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — строка {e.lineno}, колонка {e.colno} ({e.msg})")
+
+
 def norm_label(s):
+    """Нормализует ярлык: нижний регистр, первое слово, без пунктуации."""
     if not s:
         return None
     t = re.sub(r"[^\wа-яё]+", " ", str(s).lower()).strip()
@@ -39,7 +54,8 @@ def norm_label(s):
     return t
 
 def load_run(path):
-    d = json.load(open(path, encoding="utf-8"))
+    """Загружает один прогон картирования (json) в вид {cell: {label, text}}."""
+    d = _read_json(path)
     out = {}
     for cell, v in d.items():
         if isinstance(v, dict):
@@ -60,6 +76,7 @@ def text_stability(texts):
     return sum(sims) / len(sims) if sims else 1.0
 
 def weighted_vote(labels, weights):
+    """Взвешенное голосование по ярлыкам: возвращает (ярлык-победитель, степень согласия, доля)."""
     tally = Counter()
     for lab, w in zip(labels, weights):
         if lab:
@@ -80,6 +97,7 @@ def weighted_vote(labels, weights):
     return top, agree, round(share, 2)
 
 def main():
+    """CLI: сравнивает N прогонов картирования и флагует расходящиеся ячейки человеку."""
     ap = argparse.ArgumentParser()
     ap.add_argument("runs", nargs="+", help="JSON-файлы прогонов (>=2)")
     ap.add_argument("--weights", default=None, help="через запятую, по числу прогонов")

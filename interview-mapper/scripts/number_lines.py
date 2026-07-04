@@ -13,15 +13,23 @@ CLI:  python number_lines.py вход.txt [--out выход.txt]
 import argparse, sys, os
 
 def read_text(path):
+    """Читает .txt или .docx (если установлен python-docx); ошибки → внятное сообщение, exit 1."""
     if path.lower().endswith(".docx"):
         try:
             import docx
         except Exception:
             sys.exit("Нужен python-docx для .docx: pip install python-docx --break-system-packages")
         return "\n".join(p.text for p in docx.Document(path).paragraphs)
-    return open(path, encoding="utf-8").read()
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
 
 def main():
+    """CLI: нумерует строки транскрипта и пишет результат в *_nl.txt."""
     ap = argparse.ArgumentParser()
     ap.add_argument("input")
     ap.add_argument("--out", default=None)

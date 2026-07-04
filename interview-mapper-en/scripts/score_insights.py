@@ -17,10 +17,25 @@ Input nuggets.json — a list:
 
 CLI: python score_insights.py nuggets.json [--k 3] [--out insights_scored.json]
 """
-import argparse, json
+import argparse, json, sys
 from collections import defaultdict
 
+
+def _read_json(path):
+    """Read a JSON file; broken JSON or a missing file → a clear error, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — line {e.lineno}, column {e.colno} ({e.msg})")
+
+
 def main():
+    """CLI: computes triangulation/severity/tensions across nugget clusters and prints a summary."""
     ap = argparse.ArgumentParser()
     ap.add_argument("nuggets")
     ap.add_argument("--k", type=int, default=3, help="Triangulation threshold: min. different interviews with a verified quote")
@@ -28,7 +43,7 @@ def main():
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
 
-    nuggets = json.load(open(a.nuggets, encoding="utf-8"))
+    nuggets = _read_json(a.nuggets)
     all_interviews = sorted({n.get("interview") for n in nuggets if n.get("interview")})
     N = len(all_interviews)
 

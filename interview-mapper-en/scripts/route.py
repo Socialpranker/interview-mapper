@@ -43,6 +43,7 @@ OUTPUT = {
 K = 3  # default triangulation threshold
 
 def choose_lens(goal, respondent):
+    """Chooses the lens file by goal and respondent type (goal usually beats «who»)."""
     # goal-override is stronger, except for org/employee
     if goal in LENS_BY_GOAL and not (goal == "org"):
         return LENS_BY_GOAL[goal]
@@ -51,6 +52,7 @@ def choose_lens(goal, respondent):
     return LENS.get(respondent, "templates/org-mapping-vmdi.md")
 
 def main():
+    """CLI: builds a deterministic pipeline plan from the intake (goal/respondent/output/N)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--goal", required=True)
     ap.add_argument("--respondent", required=True)

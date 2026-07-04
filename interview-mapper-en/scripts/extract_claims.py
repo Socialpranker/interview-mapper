@@ -12,14 +12,27 @@ The line number is NOT required — verify_quotes finds it itself (see --emit-en
 
 CLI: python extract_claims.py mapping.md [--interview "Daria"] [--role "operations"] [--out claims.json]
 """
-import argparse, json, re
+import argparse, json, re, sys
 
 # Catches codes: С3.2, С2.П (VMDI), as well as К5/К10, А1, J1, C1, E1
 CELL_RE = re.compile(r"\*\*\s*([A-Za-zА-Яа-я]{1,2}\d{1,2}(?:\.[\wА-Яа-я]+)?)\s*[|｜]\s*([^*]+)\*\*")
 QUOTE_RE = re.compile(r"«([^»]{4,})»")
 LINE_RE = re.compile(r"\(L?(\d{1,4})\)")
 
+
+def _read_text(path):
+    """Read a text file, or exit with a clear error."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+
+
 def main():
+    """CLI: parses an .md mapping and extracts a list of quotes into claims.json."""
     ap = argparse.ArgumentParser()
     ap.add_argument("mapping")
     ap.add_argument("--interview", default=None)
@@ -27,7 +40,7 @@ def main():
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
 
-    text = open(a.mapping, encoding="utf-8").read()
+    text = _read_text(a.mapping)
     lines = text.splitlines()
     cur_cell, cur_title, cur_claimtext = None, None, ""
     claims = []

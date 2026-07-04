@@ -10,23 +10,39 @@ Output: adjudication.md (for the human) + adjudication.json.
 
 CLI: python make_adjudication.py consensus.json run1.json run2.json [run3.json ...] [--out adjudication.md]
 """
-import argparse, json, re
+import argparse, json, re, sys
+
+
+def _read_json(path):
+    """Read a JSON file; broken JSON or a missing file → a clear error, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — line {e.lineno}, column {e.colno} ({e.msg})")
+
 
 def load_run(path):
-    d = json.load(open(path, encoding="utf-8"))
+    """Loads one mapping run (json) into the shape {cell: {label, text}}."""
+    d = _read_json(path)
     out = {}
     for cell, v in d.items():
         out[cell] = v if isinstance(v, dict) else {"label": None, "text": str(v)}
     return out
 
 def main():
+    """CLI: prepares adjudication cards for the cells flagged by consensus.py."""
     ap = argparse.ArgumentParser()
     ap.add_argument("consensus")
     ap.add_argument("runs", nargs="+")
     ap.add_argument("--out", default="adjudication.md")
     a = ap.parse_args()
 
-    cons = json.load(open(a.consensus, encoding="utf-8"))
+    cons = _read_json(a.consensus)
     flagged = cons.get("summary", {}).get("flagged", [])
     runs = [load_run(p) for p in a.runs]
 

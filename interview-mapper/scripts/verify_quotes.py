@@ -23,7 +23,7 @@ CLI:
   claims.json: [{"cell":"К5","claim":"...","quote":"...","line":61}]  (line — опционально)
 Выход: JSON со статусом на каждую цитату.
 """
-import argparse, json, re, unicodedata
+import argparse, json, re, sys, unicodedata
 
 # ---------- fuzzy backend (rapidfuzz optional, difflib fallback) ----------
 try:
@@ -33,6 +33,30 @@ try:
 except Exception:
     _HAS_RF = False
 from difflib import SequenceMatcher
+
+
+def _read_text(path):
+    """Читает текстовый файл или завершает работу с внятной ошибкой."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+
+
+def _read_json(path):
+    """Читает JSON-файл; битый JSON или отсутствие файла → внятная ошибка, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — строка {e.lineno}, колонка {e.colno} ({e.msg})")
 
 FILLERS = {
     # ru
@@ -44,6 +68,7 @@ FILLERS = {
 }
 
 def strip_accents(s: str) -> str:
+    """Убирает диакритику через NFKD-разложение."""
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
 
 def normalize(s: str) -> str:
@@ -100,6 +125,7 @@ def lcs_coverage(needle: str, hay: str) -> float:
     return min(1.0, total / max(1, len(needle)))
 
 def verify_one(quote, lines, norm_full, line_index, threshold, min_cov, window, claimed_line):
+    """Верифицирует одну цитату каскадом exact → fuzzy → rejected."""
     qn = normalize(quote)
     if not qn:
         return {"status": "empty", "score": 0}
@@ -133,6 +159,7 @@ def verify_one(quote, lines, norm_full, line_index, threshold, min_cov, window, 
             "line_found": None, "matched": matched}
 
 def window_text(lines, center_line, k):
+    """Возвращает окно ±k строк вокруг заявленной строки (или весь текст, если строка не найдена)."""
     nums = [ln for ln, _ in lines]
     if center_line not in nums:
         return " ".join(t for _, t in lines)
@@ -154,17 +181,20 @@ def build_index(lines):
     return " ".join(parts), index
 
 def locate_line(pos, index):
+    """По позиции в нормализованном полном тексте находит номер исходной строки."""
     for start, end, ln in index:
         if start <= pos <= end:
             return ln
     return index[-1][2] if index else None
 
 def line_ok(found, claimed, k):
+    """True/False, попадает ли найденная строка в окно ±k от заявленной; None, если сравнивать не с чем."""
     if claimed is None or found is None:
         return None
     return abs(found - claimed) <= k
 
 def main():
+    """CLI: разбирает аргументы, верифицирует все цитаты и печатает/пишет результат."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--transcript", required=True)
     ap.add_argument("--claims", required=True, help="JSON: список {cell,claim,quote,line?}")
@@ -179,8 +209,8 @@ def main():
                          "Модель НЕ должна гадать номер строки — его ставит скрипт.")
     a = ap.parse_args()
 
-    text = open(a.transcript, encoding="utf-8").read()
-    claims = json.load(open(a.claims, encoding="utf-8"))
+    text = _read_text(a.transcript)
+    claims = _read_json(a.claims)
     lines = parse_lines(text)
     norm_full, index = build_index(lines)
 

@@ -13,15 +13,23 @@ Output: lines of the form 'L1: ...', 'L2: ...'
 import argparse, sys, os
 
 def read_text(path):
+    """Reads .txt or .docx (if python-docx is installed); errors → a clear message, exit 1."""
     if path.lower().endswith(".docx"):
         try:
             import docx
         except Exception:
             sys.exit("python-docx is required for .docx: pip install python-docx --break-system-packages")
         return "\n".join(p.text for p in docx.Document(path).paragraphs)
-    return open(path, encoding="utf-8").read()
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
 
 def main():
+    """CLI: numbers the transcript's lines and writes the result to *_nl.txt."""
     ap = argparse.ArgumentParser()
     ap.add_argument("input")
     ap.add_argument("--out", default=None)

@@ -7,23 +7,32 @@ batch_prepare.py — подготовить папку транскриптов 
 
 CLI: python batch_prepare.py /path/to/transcripts [--out manifest.json]
 """
-import argparse, json, os, re, glob
+import argparse, json, os, re, glob, sys
 
 def read_text(path):
+    """Читает .txt или .docx (если установлен python-docx); OSError → внятная ошибка, exit 1."""
     if path.lower().endswith(".docx"):
         try:
             import docx
         except Exception:
             return None  # пометим в манифесте как требующий конвертации
         return "\n".join(p.text for p in docx.Document(path).paragraphs)
-    return open(path, encoding="utf-8").read()
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: не UTF-8 ({e.reason})")
 
 def interview_name(path):
+    """Извлекает человекочитаемое имя интервью из имени файла транскрипта."""
     base = os.path.splitext(os.path.basename(path))[0]
     base = re.sub(r"[_\-]*(расшифровка|вычитано|интервью|nl|по спикерам).*$", "", base, flags=re.I)
     return base.strip(" —_-") or base
 
 def main():
+    """CLI: нумерует строки всех транскриптов в папке и пишет манифест."""
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
     ap.add_argument("--out", default=None)

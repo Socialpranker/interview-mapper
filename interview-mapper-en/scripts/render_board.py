@@ -7,9 +7,24 @@ with interview/line and a verified/support mark. Loads nothing from the network 
 
 CLI: python render_board.py provenance.json [--out board.html] [--title "Insights: Museum"]
 """
-import argparse, json, html
+import argparse, json, html, sys
+
+
+def _read_json(path):
+    """Read a JSON file; broken JSON or a missing file → a clear error, exit 1."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except OSError as e:
+        sys.exit(f"error: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        sys.exit(f"error: {path}: not UTF-8 ({e.reason})")
+    except json.JSONDecodeError as e:
+        sys.exit(f"error: {path}: invalid JSON — line {e.lineno}, column {e.colno} ({e.msg})")
+
 
 def get_clusters(data):
+    """Extracts the list of clusters from either provenance.json or scored.json."""
     if "provenance" in data:
         return data["provenance"]
     return data.get("clusters", [])
@@ -80,12 +95,13 @@ draw();
 </script></html>"""
 
 def main():
+    """CLI: builds a standalone HTML insight board from provenance/scored JSON."""
     ap = argparse.ArgumentParser()
     ap.add_argument("data")
     ap.add_argument("--out", default="board.html")
     ap.add_argument("--title", default="Insights from interviews")
     a = ap.parse_args()
-    data = json.load(open(a.data, encoding="utf-8"))
+    data = _read_json(a.data)
     clusters = get_clusters(data)
     n_iv = (data.get("summary", {}).get("insights", {}) or {}).get("total_interviews", "?")
     sub = f"clusters: {len(clusters)} · interviews: {n_iv} · green=insight, yellow=watchlist, gray=weak"
