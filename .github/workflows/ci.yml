@@ -1,0 +1,30 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile all scripts
+        run: python -m py_compile interview-mapper/scripts/*.py interview-mapper-en/scripts/*.py
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Validate evals JSON
+        run: |
+          python -m json.tool interview-mapper/evals/evals.json > /dev/null
+          python -m json.tool interview-mapper-en/evals/evals.json > /dev/null
+      - name: Smoke route.py
+        run: |
+          python interview-mapper/scripts/route.py --goal org --respondent employee --n 3 > /dev/null
+          python interview-mapper-en/scripts/route.py --goal org --respondent employee --n 3 > /dev/null
+      - name: Mirror check (identical file sets RU/EN)
+        run: |
+          diff <(cd interview-mapper && find . -type f -not -path "*/__pycache__/*" | sort) \
+               <(cd interview-mapper-en && find . -type f -not -path "*/__pycache__/*" | sort)

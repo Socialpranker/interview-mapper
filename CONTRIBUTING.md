@@ -15,10 +15,12 @@ Thanks for your interest! This project is a Claude/Cowork **skill** plus stdlib-
 - Data field names / JSON keys are a contract shared between scripts — renaming one means updating all consumers.
 
 ## Dev checks
-```bash
-python -m py_compile interview-mapper*/scripts/*.py   # must pass
-python interview-mapper-en/scripts/route.py --goal org --respondent employee --n 3   # smoke test
-```
+
+CI runs these on every push/PR (`.github/workflows/ci.yml`). Locally:
+
+    python -m py_compile interview-mapper*/scripts/*.py   # must pass
+    python -m unittest discover -s tests                  # must pass
+    python interview-mapper-en/scripts/route.py --goal org --respondent employee --n 3   # smoke test
 
 ## Adding a lens or output
 Before adding a template, check the two axes: is the task already covered by an existing `lens × output`? If yes, don't add a duplicate — extend routing in `references/intake.md` and `scripts/route.py`.
