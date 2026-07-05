@@ -58,6 +58,9 @@ and the default of 88 already sits inside that plateau (F1=1.00, P=1.00, R=1.00)
 are below the 0.03 bar → **the 88/0.6 defaults are left unchanged**. Precision is 1.00 on both
 languages across the whole grid — no false confirmations at any combination; the spread comes
 entirely from recall (noise class).
+A caveat for EN: the F1=1.00 plateau across 70–88 with unchanged P/R signals that the EN
+gold set is not sensitive enough to the threshold (no cases near the decision boundary) —
+not proof that 88 is optimal.
 
 **The threshold depends on the backend.** Calibration was run on the difflib fallback
 (rapidfuzz wasn't installed). difflib matches the quote against the whole text, and

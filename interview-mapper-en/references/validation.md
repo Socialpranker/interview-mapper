@@ -1,6 +1,6 @@
 # Validation and calibration (T1) — before trusting the conclusions
 
-The skill is assembled from research, but the thresholds are guessed and accuracy hasn't been measured. Before "production" use — run this stage. Otherwise you're building on sand.
+The skill is assembled from research; the thresholds are calibrated on synthetic data only (`reliability.md`) and accuracy on real data hasn't been measured. Before "production" use — run this stage. Otherwise you're building on sand.
 
 ## What we calibrate
 Thresholds in the scripts are hyperparameters, not truth:
