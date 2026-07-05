@@ -43,3 +43,41 @@ Sources: PERC'25, AI&Society 2025, mental-health TA (2507.08002).
 - **DeTAILS**: not verbatim — discard.
 - **Deterministic Quoting**: don't trust the quote text, take it by reference.
 Our `verify_quotes.py` is a hybrid: it fixes (fuzzy transfer) + flags/discards + logs everything transparently.
+
+## Threshold calibration on synthetic data (2026-07)
+
+Gold set: `evals/gold/` — 52 labeled cases per language, 6 distortion classes
+(exact / noise / truncation / splice / paraphrase / hallucination).
+Run: `calibrate_threshold.py`, grid of threshold 70–98 (step 2) x coverage {0.4, 0.5, 0.6, 0.7}.
+
+Result: coverage in the 0.4–0.7 range doesn't affect P/R/F1 for either language — on this
+gold set, LCS coverage turned out not to be a discriminator with the difflib backend. On
+threshold: RU has a F1=0.90 plateau across 70–82, with the default of 88 giving F1=0.89
+(P=1.00, R=0.79); the best point wins by only 0.01. EN has a F1=1.00 plateau across 70–88,
+and the default of 88 already sits inside that plateau (F1=1.00, P=1.00, R=1.00). Both gains
+are below the 0.03 bar → **the 88/0.6 defaults are left unchanged**. Precision is 1.00 on both
+languages across the whole grid — no false confirmations at any combination; the spread comes
+entirely from recall (noise class).
+
+**The threshold depends on the backend.** Calibration was run on the difflib fallback
+(rapidfuzz wasn't installed). difflib matches the quote against the whole text, and
+SequenceMatcher's autojunk heuristic on texts >200 characters makes scores unstable for
+noisy quotes: the same degree of ASR noise yields ~90 in one spot and ~0 in another,
+depending on position. On our own gold set the noise class showed a score spread from 0 to
+96 for verbatim (is_verbatim=true) quotes — reproduced directly by calling `fuzzy_score()`
+in this session. Separately, on a synthetic quote with one word dropped, difflib scored ≈79
+(cut by the 88 threshold); rapidfuzz isn't installed in this environment, and its score on
+the same pair wasn't re-verified in this session — per a note from a prior calibration
+session it was noticeably higher and more stable (on the order of ≈94, passing the
+threshold), but that figure isn't re-measured here and is offered as a reference point, not
+a fact of the current run. On difflib the gap between verbatim (≈84–100 for most cases) and
+non-verbatim is so large that the exact threshold value barely affects precision — but recall
+on the noise class is unpredictable and depends on the specific text, not just the degree of
+distortion. With rapidfuzz installed (recommended for real work) the noise class behaves
+differently — recalibrate on your own backend.
+
+Honest caveats: synthetic data ≠ real interviews (the distortions are constructed, not
+collected from a real model); the class "verbatim but doesn't support the claim" isn't
+represented here — that's entailment, caught by check_support.py, not the verbatim
+threshold. Before trusting this on your own data — calibrate on your own gold set
+(references/validation.md).

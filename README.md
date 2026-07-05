@@ -126,7 +126,7 @@ Python **stdlib only**. `rapidfuzz` is used if installed (more accurate verbatim
 
 This is a research preview. Read these before trusting output:
 
-- **Thresholds are guessed** (fuzzy 88, coverage 0.6, k=3) — calibrate on your data (`calibrate_threshold.py`, `references/validation.md`).
+- **Thresholds calibrated on synthetic data only** (fuzzy 88, coverage 0.6 — see `references/reliability.md`; 104 labeled cases RU+EN) — not yet validated on real transcripts; calibrate on your data (`calibrate_threshold.py`, `references/validation.md`). k=3 is a methodological choice (triangulation), not a tuned metric.
 - **Latent constructs** (tone, intent, eNPS) are where LLMs are weakest — always human candidates.
 - `n < k` interviews = a **pilot**, not a measurement; synthesis yields only a watchlist.
 - The machinery is complete and tested on toy data, but **not yet validated at scale** against a human baseline.

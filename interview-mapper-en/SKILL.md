@@ -77,7 +77,7 @@ For several interviews: `python scripts/batch_prepare.py folder/` — numbers li
    The script catches `dangerous` (quote is verbatim but the thesis is NOT supported by it — verbatim ≠ support) and `judge_disagreements` → soften both / send to a human.
 5. **Counterfactual pass:** "what in the data CONTRADICTS these conclusions? which fragments landed in no cell?" (omission-check — omissions are more dangerous than fabrications).
 
-> verify/score thresholds are guessed. Before production use, calibrate: `references/validation.md` + `scripts/calibrate_threshold.py`.
+> verify/score thresholds are calibrated on synthetic data (`references/reliability.md`), not on real data. Before production use, calibrate: `references/validation.md` + `scripts/calibrate_threshold.py`.
 
 ### S3 — Reliability council (only for unstable Layer-2 cells)
 Analysis (eNPS, culture of recognition, horizon, forces of progress, etc.) flips across runs.
@@ -129,7 +129,7 @@ The score is set by a human blind, not by the AI itself.
 
 ## Honest limits (state them to the user)
 - On **latent** constructs (tone, intent, power, eNPS) LLMs are weak — these cells are always human candidates.
-- Thresholds (fuzzy 88, coverage 0.6, k=3) are guessed. **Calibrate before trusting** (`references/validation.md`).
+- Thresholds (fuzzy 88, coverage 0.6) are calibrated on synthetic data (`references/reliability.md`), not validated on real data. **Calibrate before trusting** (`references/validation.md`). k=3 is a methodological triangulation threshold, not a tuned metric.
 - n<k interviews — a pilot, not a measurement. Synthesis gives only watchlist, not insights.
 - Verbatim ≠ support: `verify_quotes` does not replace `check_support`.
 
