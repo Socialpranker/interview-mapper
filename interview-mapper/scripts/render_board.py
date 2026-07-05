@@ -103,7 +103,14 @@ def main():
     a = ap.parse_args()
     data = _read_json(a.data)
     clusters = get_clusters(data)
-    n_iv = (data.get("summary", {}).get("insights", {}) or {}).get("total_interviews", "?")
+    summary = data.get("summary", {}) or {}
+    # provenance.json: summary.insights — dict со своим total_interviews;
+    # scored.json: summary.insights — int, интервью лежат в summary.total_interviews.
+    insights = summary.get("insights")
+    if isinstance(insights, dict):
+        n_iv = insights.get("total_interviews", "?")
+    else:
+        n_iv = summary.get("total_interviews", "?")
     sub = f"кластеров: {len(clusters)} · интервью: {n_iv} · зелёный=инсайт, жёлтый=watchlist, серый=weak"
     htmlout = TPL.format(title=html.escape(a.title), sub=html.escape(str(sub)),
                          data=json.dumps(clusters, ensure_ascii=False))
