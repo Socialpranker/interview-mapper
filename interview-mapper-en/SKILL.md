@@ -6,10 +6,10 @@ description: >
   or "make sense of" an interview, transcript, depth interview, custdev/JTBD/expert
   interview, synthesize a series of interviews, or pull cross-interview insights
   (synthesis, patterns, insight cards) — even if they don't name a method. Supports
-  employee org-mapping, JTBD, CustDev/discovery, expert, visitor-experience, and
-  positioning/brand lenses. Specifically handles: transcription distortions, fabricated
-  and "regenerated" quotes, and instability of analytic conclusions across runs.
-  Not for generating new interviews and not for plain audio transcription.
+  employee org-mapping, JTBD, CustDev/discovery, and expert interviews. Specifically
+  handles: transcription distortions, fabricated and "regenerated" quotes, and
+  instability of analytic conclusions across runs. Not for generating new interviews
+  and not for plain audio transcription.
 ---
 
 # Interview Mapper
@@ -22,8 +22,8 @@ in a verbatim quote**, analysis is checked across **multiple runs**, and dispute
 ## S0 — Intake "Goal survey" (ALWAYS first)
 The pipeline depends on two axes: **what you're deciding** (goal) and **who you interviewed** (respondent).
 Don't start mapping until both are clear. Ask adaptively (details — `references/intake.md`):
-1. **Goal:** discovery · org-mapping · experience evaluation · positioning/brand · prioritization · expert validation · personas.
-2. **Who you interviewed:** employee · customer · expert · visitor · stakeholder · candidate.
+1. **Goal:** discovery · org-mapping · experience evaluation · positioning/brand · prioritization · expert validation · personas · usability · exit · win/loss · project retro · intercept (in-the-moment) · conflict resolution · natural practice (ethnography) · change readiness.
+2. **Who you interviewed:** employee · customer · expert · visitor · stakeholder · candidate · group (focus group/team) · party to a conflict.
 3. (as needed) output · number of interviews · whether a human baseline exists.
 
 Then lock the route with a script:
@@ -33,12 +33,29 @@ Then lock the route with a script:
 ### Axis 1 — Lenses (how to extract from ONE interview)
 | Lens | For whom | Template |
 |---|---|---|
-| Org-mapping (6 blocks · 40 codes) | employee | `templates/org-mapping-vmdi.md` |
+| Org-mapping VMDI (6 blocks · 40 codes) | employee | `templates/org-mapping-vmdi.md` |
 | JTBD | customer (the "job"/choice) | `templates/jtbd.md` |
 | CustDev (Mom Test) | customer (problem discovery) | `templates/custdev.md` |
 | Expert | expert/stakeholder | `templates/expert.md` |
 | Visitor experience | visitor | `templates/visitor-experience.md` |
 | Positioning/brand | anyone (name/brand focus) | `templates/brand-positioning.md` |
+| Exit interview | departing employee | `templates/exit.md` |
+| Usability / think-aloud | user performing a task in an interface | `templates/usability.md` |
+| Win/Loss | customer, outcome already known | `templates/winloss.md` |
+| Candidate (hiring) | candidate | `templates/candidate.md` |
+| Intercept (in-the-moment, touchpoint) | visitor/customer, right after an episode | `templates/intercept.md` |
+| Diagnostic / conflict (pre-mediation) | party to a conflict | `templates/conflict-mediation.md` |
+| Ethnographic (in-situ, observation) | employee/user in a natural setting | `templates/ethnographic.md` |
+| Change readiness | stakeholder/employee ahead of a transformation | `templates/change-readiness.md` |
+
+### Axis 1b — Group formats (NOT 1-on-1, different coding unit)
+The unit is the turn + speaker + position within the group (who agreed/pushed back), not an isolated
+statement. The transcript must be diarized (speakers labeled) — otherwise this is an S1 blocker;
+you cannot re-attribute speakers by eye.
+| Format | For whom | Template |
+|---|---|---|
+| Focus group | group of customers/users/experts | `templates/focus-group.md` |
+| Post-project retro | team after a completed project | `templates/team-retro.md` |
 
 ### Axis 2 — Outputs (what to build from N interviews)
 | Output | When | Template |
@@ -105,6 +122,9 @@ Details: `references/synthesis.md`. In brief:
 5. **Audit and board** — `python scripts/build_provenance.py --insights scored.json --support support.json` → full trail insight→quote→line→interview; `python scripts/render_board.py provenance.json --out board.html` → standalone HTML board with filters.
 
 Honestly: a pattern = ≥k distinct interviews with a verified quote. Too few interviews → watchlist only, don't sell as an insight. Frequency ≠ importance (keep the second axis — criticality); the gold is in tensions, not consensus.
+
+### S8 — Longitudinal/panel analysis (same person, N waves)
+When there are ≥2 mappings of the SAME person at different times (a repeat interview, a pulse survey) — this is not pooling different people (S5–S7), but tracking one person's cell-level shift over time. Classification: STABLE / SHIFT / NOISE-INDISTINGUISHABLE-FROM-SHIFT (the latter if the cell didn't pass the S3 council on both waves). Details: `references/synthesis.md` §S8.
 
 ## Human↔AI comparison (optional)
 If a human version exists — compare via `references/rubric.md` (18 cells × coverage 1–5 + discrepancy types).

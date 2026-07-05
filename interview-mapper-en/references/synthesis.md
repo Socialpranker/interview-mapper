@@ -67,3 +67,51 @@ Run S6–S7 twice in a fresh context. Insights that didn't reproduce (appeared/d
 
 ## Ranking the output
 Sort: first `insight` by (frequency×criticality), then `watchlist` (including tensions and rare-but-critical), then don't show `weak` in the main report (move it to the "raw nuggets" appendix).
+
+## S8 — Longitudinal / panel analysis (the same person, N waves)
+
+A separate axis on top of S5–S7, not a replacement: applies when there are **≥2 mappings of the SAME
+person**, taken at different times (wave 1, wave 2, …) using the same lens. The task is not "reconcile
+different people into a pattern" (that's S5–S7), but to capture **how one person's position changed over
+time**.
+
+### When to apply
+- A repeat interview with the same employee/customer/expert months apart (e.g. before and after a change,
+  or a quarterly pulse survey of the same panel of respondents).
+- Don't confuse this with S3 (reliability pass) — there N runs of the AI go over ONE AND THE SAME transcript
+  at a single point in time; here N TRANSCRIPTS of one person exist at DIFFERENT points in time.
+
+### Schema (`panel.json`, a list keyed by person)
+```json
+{"person_id":"p1", "role":"operations",
+ "waves":[
+   {"wave":1, "date":"2026-02-01", "cell":"A5", "label":"Promoter", "quote":"...", "line":40, "verified":true},
+   {"wave":2, "date":"2026-06-01", "cell":"A5", "label":"Neutral",  "quote":"...", "line":22, "verified":true}
+ ]}
+```
+- `person_id` — a stable identifier for the person across waves (not their name in the open, if anonymization is needed).
+- Comparison is done PER CELL (the same lens cell across different waves), not interview-by-interview as a whole.
+
+### Steps
+1. **Match cells across waves** — for each cell of Layer 2 (analytical, unstable) belonging to a person: value in wave N vs wave N+1.
+2. **Classify the shift**:
+   - **STABLE** — the value didn't change between waves.
+   - **SHIFT** — it changed; pull a quote from BOTH waves showing the difference, and (if available) the reason for the shift in the respondent's own words from wave N+1 ("what's changed since last time").
+   - **NOISE vs REAL SHIFT** — if a cell is unstable even WITHIN a single wave (S3-flagged), don't conclude there's a shift between waves until the S3 pass has been run on both waves separately — otherwise you'll mistake method variance for real change.
+3. **Panel-level aggregation (if ≥3 people each have ≥2 waves)** — count how many people shifted in the same direction on the same cell; this is a separate, stronger signal than a single person's shift.
+4. **Don't confuse a trend with regression to the mean** — a single sharp outlier in wave 1 (e.g. right after an incident) followed by a "calmer" value in wave 2 may not be a real change in position but a natural regression; flag this as an alternative hypothesis, don't silently discard it.
+
+### Output — panel card
+```
+### [Person ID / role] Cell [X]: wave 1 → wave N
+Wave 1 (date): [label] — «quote» (Lxx)
+Wave N (date): [label] — «quote» (Lxx)
+Classification: STABLE / SHIFT / UNDETERMINED (noise indistinguishable from shift)
+Reason for shift (in the respondent's own words, if asked): […]
+Alternative hypothesis: [regression to the mean / external event / method artifact]
+```
+
+### Limitation
+Panel analysis on latent cells (eNPS, forecast, recognition) is doubly unreliable — they're unstable even
+within a single wave (see S3), and comparing two unstable points can produce a false "shift". Don't conclude
+a position has changed based on a single latent cell without an S3 pass on EACH wave.
