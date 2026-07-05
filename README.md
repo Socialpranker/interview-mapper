@@ -44,6 +44,7 @@ Interview Mapper turns each of those into an explicit, auditable guardrail.
 | "Everyone said X" | **Triangulation**: ≥k distinct interviews before it's a pattern (`score_insights.py`) |
 | Ranks by frequency | **Frequency × criticality** + surfaces **role tensions** |
 | Opaque conclusions | **Full audit trail** insight→quote→line→interview + HTML board |
+| "Looks about right" | **Blind human↔AI review blanks** (`compare_to_gold.py`) scored on a frozen rubric, per lens |
 
 Full rationale and citations: [`references/reliability.md`](./interview-mapper-en/references/reliability.md) (RU: [`interview-mapper/references/reliability.md`](./interview-mapper/references/reliability.md)). All references/templates are mirrored 1:1 between the two language folders.
 
@@ -117,6 +118,9 @@ python scripts/verify_quotes.py --transcript transcript_nl.txt --claims mapping_
 
 # score cross-interview clusters (triangulation, freq×criticality, tensions)
 python scripts/score_insights.py nuggets.json --k 3
+
+# build a blind human↔AI review blank against a gold mapping
+python scripts/compare_to_gold.py --gold gold.md --ai ai_mapping.md --lens templates/candidate.md
 ```
 
 ## Repository layout
@@ -130,7 +134,7 @@ python scripts/score_insights.py nuggets.json --k 3
 │   ├── templates/             # 16 lenses
 │   ├── outputs/               # 5 outputs
 │   ├── references/            # pipeline, reliability, synthesis, rubric, validation, intake
-│   ├── scripts/               # 13 stdlib-only tools
+│   ├── scripts/               # 14 stdlib-only tools
 │   └── evals/                 # eval prompts
 ├── interview-mapper.skill     # installable RU package
 ├── interview-mapper-en.skill  # installable EN package
@@ -150,6 +154,7 @@ This is a research preview. Read these before trusting output:
 - `n < k` interviews = a **pilot**, not a measurement; synthesis yields only a watchlist.
 - The machinery is complete and tested on toy data, but **not yet validated at scale** against a human baseline.
 - Evals: fixtures for all 16 lenses (transcript + gold mapping + machine-readable claims, all quotes verified).
+- One real human↔AI pilot run so far (`candidate` lens, [example blank](interview-mapper/evals/fixtures/candidate/review-example.md)): 12/13 cells scored 5/5, the one miss was a latent Layer-2 cell — exactly where the methodology predicts humans stay in the loop.
 
 ## Contributing
 
