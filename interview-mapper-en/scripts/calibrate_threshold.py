@@ -2,7 +2,7 @@
 """
 calibrate_threshold.py — calibrate the verbatim threshold against a gold-set.
 
-Problem: the fuzzy threshold (88) and coverage (0.6) in verify_quotes.py are guessed. They need to be
+Problem: the fuzzy threshold (88) and coverage (0.6) in verify_quotes.py are calibrated on synthetic data only. They need to be
 calibrated on LABELED data, not taken from tutorials (the only documented threshold is difflib 0.6).
 
 Input gold.json — a list of manually labeled examples:

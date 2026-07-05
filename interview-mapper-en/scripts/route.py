@@ -105,7 +105,7 @@ def main():
 
     caveats = [
         "Latent cells (eNPS, recognition, forecast) are always candidates for a human.",
-        "Thresholds are guessed — calibrate (references/validation.md).",
+        "Thresholds are calibrated on synthetic data only — validate on your data (references/validation.md).",
     ]
     if a.respondent == "group":
         caveats.append("Group format: the coding unit is utterance+speaker, not an isolated statement. The transcript MUST be diarized (speakers labeled) — otherwise it's an S1 blocker; do not re-code by eye.")
