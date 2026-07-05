@@ -4,6 +4,7 @@
 
 **Turn interview transcripts into evidence-grounded mappings and cross-interview insights — without the hallucinated quotes, "verbatim-but-unsupported" claims, and run-to-run flip-flopping that plague naive LLM qualitative analysis.**
 
+[![CI](https://github.com/Socialpranker/interview-mapper/actions/workflows/ci.yml/badge.svg)](https://github.com/Socialpranker/interview-mapper/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill-8A63D2)](https://www.anthropic.com)
 [![Python](https://img.shields.io/badge/Python-stdlib_only-3776AB?logo=python&logoColor=white)](#dependencies)
@@ -18,6 +19,7 @@
 
 - [Why this exists](#why-this-exists)
 - [Pipeline](#pipeline)
+- [Example output](#example-output)
 - [Two axes, not a pile of templates](#two-axes-not-a-pile-of-templates)
 - [Two language versions](#two-language-versions)
 - [Quickstart](#quickstart)
@@ -57,6 +59,23 @@ flowchart TD
     OUT --> AUD["build_provenance + render_board"]
     V(["calibrate_threshold · rubric · validation"]) -. calibrate .-> S2
 ```
+
+## Example output
+
+Insight board rendered by `render_board.py` from synthetic demo data (no network, single HTML file).
+The C3 card deliberately shows a quote that failed verification (`⚠ не verified`) — the pipeline
+surfaces failed checks instead of hiding them:
+
+![Insight board example](docs/board-example.png)
+
+Each insight card carries its evidence chain — the same data as `provenance.json`:
+
+    INSIGHT · C1 · triangulated 4/4 interviews · tension: ops(−) vs mgmt(+)
+    "Manual, double-entry reporting is normal ops friction — but management frames it as a people problem, not a system problem"
+      evidence: i1/ops  «Отчётность мы до сих пор собираем руками, хотя вроде как систему обещали ещё в прошлом году.» (L5, verified)
+                i2/mgmt «То есть теоретически всё уже готово, просто никто не заставил людей этим пользоваться.» (L27, verified)
+                i3/ops  «Ежемесячный отчёт по возвратам мы формируем в эксельке вручную, копируя данные построчно.» (L16, verified)
+                i4/ops  «Клиент пишет в чат, менеджер копирует текст в эксельку, а потом забывает перенести это в CRM.» (L2, verified)
 
 ## Two axes, not a pile of templates
 
@@ -134,7 +153,7 @@ This is a research preview. Read these before trusting output:
 
 ## Contributing
 
-Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for the principles to preserve (grounding, verbatim ≠ support, human-in-the-loop) and dev checks.
+Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for the principles to preserve (grounding, verbatim ≠ support, human-in-the-loop) and dev checks, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
 
 ## License
 
