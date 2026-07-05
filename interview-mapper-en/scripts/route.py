@@ -8,8 +8,9 @@ which output to build, which stages apply). The model doesn't guess the route �
 CLI (flags or interactive):
   python route.py --goal org --respondent employee --output insights --n 6 [--baseline yes]
 Values:
-  goal:       discovery|org|experience|brand|prioritization|usability|expert|personas
-  respondent: employee|customer|expert|visitor|stakeholder|candidate
+  goal:       discovery|org|experience|brand|prioritization|usability|expert|personas|exit|winloss|retro|
+              intercept|conflict|ethnography|changereadiness
+  respondent: employee|customer|expert|visitor|stakeholder|candidate|group|conflictparty
   output:     mapping|insights|jobmap|persona|journey|memo|opportunity
   n:          number of interviews (int)
 """
@@ -21,13 +22,23 @@ LENS = {  # (by respondent, considering the goal) → lens file
     "expert": "templates/expert.md",
     "customer": "templates/jtbd.md",       # refined by goal below
     "stakeholder": "templates/expert.md",
-    "candidate": "templates/org-mapping-vmdi.md",
+    "candidate": "templates/candidate.md",
+    "group": "templates/focus-group.md",   # refined by goal below (retro → team-retro)
+    "conflictparty": "templates/conflict-mediation.md",
 }
 LENS_BY_GOAL = {  # goal overrides the lens when the goal matters more than «who»
     "discovery": "templates/custdev.md",
     "brand": "templates/brand-positioning.md",
     "experience": "templates/visitor-experience.md",
     "expert": "templates/expert.md",
+    "usability": "templates/usability.md",
+    "exit": "templates/exit.md",
+    "winloss": "templates/winloss.md",
+    "retro": "templates/team-retro.md",
+    "intercept": "templates/intercept.md",
+    "conflict": "templates/conflict-mediation.md",
+    "ethnography": "templates/ethnographic.md",
+    "changereadiness": "templates/change-readiness.md",
 }
 OUTPUT = {
     "insights": "outputs/insight-cards.md",
@@ -44,6 +55,10 @@ K = 3  # default triangulation threshold
 
 def choose_lens(goal, respondent):
     """Chooses the lens file by goal and respondent type (goal usually beats «who»)."""
+    # respondent beats goal where the respondent type alone unambiguously sets the lens
+    # (a candidate interview is not "expert validation"; a conflict party must not be confused with expert/stakeholder)
+    if respondent in ("candidate", "conflictparty"):
+        return LENS[respondent]
     # goal-override is stronger, except for org/employee
     if goal in LENS_BY_GOAL and not (goal == "org"):
         return LENS_BY_GOAL[goal]
@@ -65,7 +80,10 @@ def main():
     # output by goal, if not explicitly set
     default_out = {"org": "insights", "discovery": "insights", "experience": "journey",
                    "brand": "memo", "prioritization": "opportunity", "personas": "persona",
-                   "expert": "memo", "usability": "insights"}.get(a.goal, "insights")
+                   "expert": "memo", "usability": "insights", "exit": "insights",
+                   "winloss": "memo", "retro": "insights", "intercept": "insights",
+                   "conflict": "memo", "ethnography": "insights",
+                   "changereadiness": "memo"}.get(a.goal, "insights")
     out_key = a.output or default_out
     out_file = OUTPUT.get(out_key)
 
@@ -85,15 +103,23 @@ def main():
     if a.baseline.lower() in ("yes", "y", "да"):
         steps += ["Human↔AI comparison on rubric.md (Δ 1–5, per-block), scored by a human blind"]
 
+    caveats = [
+        "Latent cells (eNPS, recognition, forecast) are always candidates for a human.",
+        "Thresholds are guessed — calibrate (references/validation.md).",
+    ]
+    if a.respondent == "group":
+        caveats.append("Group format: the coding unit is utterance+speaker, not an isolated statement. The transcript MUST be diarized (speakers labeled) — otherwise it's an S1 blocker; do not re-code by eye.")
+    if a.respondent == "conflictparty" or a.goal == "conflict":
+        caveats.append("Conflict/mediation: each party gets a SEPARATE mapping file, do not mix. The «interest compatibility» cell (A2) is high-stakes — mandatory human-mediator review before use in negotiations.")
+    if a.goal == "changereadiness":
+        caveats.append("Change readiness: hypotheses about hidden personal interest (A1) MUST NOT be shared with respondents without anonymization and must not be the sole basis for HR decisions without human review.")
+
     plan = {
         "goal": a.goal, "respondent": a.respondent, "n_interviews": a.n,
         "lens": lens, "output": out_file, "output_kind": out_key,
         "can_synthesize_patterns": can_synthesize, "k_triangulation": K,
         "pipeline": steps,
-        "caveats": [
-            "Latent cells (eNPS, recognition, forecast) are always candidates for a human.",
-            "Thresholds are guessed — calibrate (references/validation.md).",
-        ],
+        "caveats": caveats,
     }
     print(json.dumps(plan, ensure_ascii=False, indent=2))
 

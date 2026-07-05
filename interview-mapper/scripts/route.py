@@ -8,8 +8,9 @@ route.py — детерминированный роутер пайплайна:
 CLI (флаги или интерактивно):
   python route.py --goal org --respondent employee --output insights --n 6 [--baseline yes]
 Значения:
-  goal:       discovery|org|experience|brand|prioritization|usability|expert|personas
-  respondent: employee|customer|expert|visitor|stakeholder|candidate
+  goal:       discovery|org|experience|brand|prioritization|usability|expert|personas|exit|winloss|retro|
+              intercept|conflict|ethnography|changereadiness
+  respondent: employee|customer|expert|visitor|stakeholder|candidate|group|conflictparty
   output:     mapping|insights|jobmap|persona|journey|memo|opportunity
   n:          число интервью (int)
 """
@@ -21,13 +22,23 @@ LENS = {  # (по респонденту, с учётом цели) → файл
     "expert": "templates/expert.md",
     "customer": "templates/jtbd.md",       # уточняется целью ниже
     "stakeholder": "templates/expert.md",
-    "candidate": "templates/org-mapping-vmdi.md",
+    "candidate": "templates/candidate.md",
+    "group": "templates/focus-group.md",   # уточняется целью ниже (retro → team-retro)
+    "conflictparty": "templates/conflict-mediation.md",
 }
 LENS_BY_GOAL = {  # цель переопределяет линзу, когда важнее цель, чем «кто»
     "discovery": "templates/custdev.md",
     "brand": "templates/brand-positioning.md",
     "experience": "templates/visitor-experience.md",
     "expert": "templates/expert.md",
+    "usability": "templates/usability.md",
+    "exit": "templates/exit.md",
+    "winloss": "templates/winloss.md",
+    "retro": "templates/team-retro.md",
+    "intercept": "templates/intercept.md",
+    "conflict": "templates/conflict-mediation.md",
+    "ethnography": "templates/ethnographic.md",
+    "changereadiness": "templates/change-readiness.md",
 }
 OUTPUT = {
     "insights": "outputs/insight-cards.md",
@@ -44,6 +55,10 @@ K = 3  # порог триангуляции по умолчанию
 
 def choose_lens(goal, respondent):
     """Выбирает файл линзы по цели и типу респондента (цель обычно сильнее «кто»)."""
+    # респондент сильнее цели там, где сам тип респондента однозначно задаёт линзу
+    # (кандидат — собеседование не "экспертная валидация"; сторона конфликта — не путать с expert/stakeholder)
+    if respondent in ("candidate", "conflictparty"):
+        return LENS[respondent]
     # цель-переопределение сильнее, кроме орг/сотрудника
     if goal in LENS_BY_GOAL and not (goal == "org"):
         return LENS_BY_GOAL[goal]
@@ -65,7 +80,10 @@ def main():
     # выход по цели, если явно не задан
     default_out = {"org": "insights", "discovery": "insights", "experience": "journey",
                    "brand": "memo", "prioritization": "opportunity", "personas": "persona",
-                   "expert": "memo", "usability": "insights"}.get(a.goal, "insights")
+                   "expert": "memo", "usability": "insights", "exit": "insights",
+                   "winloss": "memo", "retro": "insights", "intercept": "insights",
+                   "conflict": "memo", "ethnography": "insights",
+                   "changereadiness": "memo"}.get(a.goal, "insights")
     out_key = a.output or default_out
     out_file = OUTPUT.get(out_key)
 
@@ -85,15 +103,23 @@ def main():
     if a.baseline.lower() in ("yes", "y", "да"):
         steps += ["Сравнение человек↔ИИ по rubric.md (Δ 1–5, per-block), балл ставит человек вслепую"]
 
+    caveats = [
+        "Латентные ячейки (eNPS, признание, прогноз) — всегда кандидаты на человека.",
+        "Пороги угаданы — калибруй (references/validation.md).",
+    ]
+    if a.respondent == "group":
+        caveats.append("Групповой формат: единица кодирования — реплика+говорящий, не изолированное высказывание. Расшифровка ДОЛЖНА быть диаризована (говорящие подписаны) — иначе блокер S1, не докодировать на глаз.")
+    if a.respondent == "conflictparty" or a.goal == "conflict":
+        caveats.append("Конфликт/медиация: каждая сторона — ОТДЕЛЬНЫЙ файл картирования, не смешивать. Ячейка «совместимость интересов» (A2) — high-stakes, обязательна проверка человеком-медиатором перед использованием в переговорах.")
+    if a.goal == "changereadiness":
+        caveats.append("Change readiness: гипотезы о скрытом личном интересе (A1) НЕЛЬЗЯ передавать респондентам без анонимизации и нельзя использовать как единственное основание кадровых решений без проверки человеком.")
+
     plan = {
         "goal": a.goal, "respondent": a.respondent, "n_interviews": a.n,
         "lens": lens, "output": out_file, "output_kind": out_key,
         "can_synthesize_patterns": can_synthesize, "k_triangulation": K,
         "pipeline": steps,
-        "caveats": [
-            "Латентные ячейки (eNPS, признание, прогноз) — всегда кандидаты на человека.",
-            "Пороги угаданы — калибруй (references/validation.md).",
-        ],
+        "caveats": caveats,
     }
     print(json.dumps(plan, ensure_ascii=False, indent=2))
 
