@@ -23,3 +23,6 @@ adjudication.*
 # Editors
 .vscode/
 .idea/
+
+# Claude Code local state
+.claude/
