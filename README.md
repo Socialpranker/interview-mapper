@@ -62,7 +62,7 @@ flowchart TD
 
 Instead of one template per situation, the skill separates **how you extract** from **what you build** — so `N lenses × M outputs` cover `N×M` tasks:
 
-**6 lenses** (extract from one interview): `org-mapping` · `JTBD` · `CustDev` · `expert` · `visitor-experience` · `positioning/brand`
+**16 lenses** (extract from one interview): `org-mapping` · `JTBD` · `CustDev` · `expert` · `visitor-experience` · `positioning/brand` · `exit` · `usability` · `win/loss` · `candidate` · `focus group` · `team retro` · `intercept` · `conflict mediation (one party)` · `ethnographic` · `change readiness`
 
 **5 outputs** (build from N): `insight cards` · `personas` · `journey map` · `opportunities/prioritization` · `decision memo`
 
@@ -108,7 +108,7 @@ python scripts/score_insights.py nuggets.json --k 3
 │   └── ...                    # same layout as interview-mapper-en/ below, mirrored 1:1
 ├── interview-mapper-en/       # EN skill (source)
 │   ├── SKILL.md               # orchestrator: S0–S7
-│   ├── templates/             # 6 lenses
+│   ├── templates/             # 16 lenses
 │   ├── outputs/               # 5 outputs
 │   ├── references/            # pipeline, reliability, synthesis, rubric, validation, intake
 │   ├── scripts/               # 13 stdlib-only tools
@@ -130,6 +130,7 @@ This is a research preview. Read these before trusting output:
 - **Latent constructs** (tone, intent, eNPS) are where LLMs are weakest — always human candidates.
 - `n < k` interviews = a **pilot**, not a measurement; synthesis yields only a watchlist.
 - The machinery is complete and tested on toy data, but **not yet validated at scale** against a human baseline.
+- Evals: fixtures for all 16 lenses (transcript + gold mapping + machine-readable claims, all quotes verified).
 
 ## Contributing
 
