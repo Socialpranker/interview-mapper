@@ -25,10 +25,10 @@
     },
     {
       "id": 3,
-      "prompt": "I have 6 coded interviews (folder mappings/). Build cross-interview insights — what's common, where they diverge, what's critical.",
-      "expected_output": "Nuggets → clusters → insight cards; each with prevalence (X of N), verified evidence from different interviews, tensions, counter-evidence; a pattern only with triangulation ≥k; watchlist separately.",
+      "prompt": "I already have extracted and clustered observations (nuggets) from 6 interviews — file mappings/nuggets.json. Build cross-interview insights — what's common, where they diverge, what's critical.",
+      "expected_output": "Nuggets → clusters → insight cards; each with prevalence (X of N), verified evidence from different interviews, tensions, counter-evidence; a pattern only with triangulation ≥k; watchlist separately. Input mappings/nuggets.json is already structured observations (nuggets in S5/S6 format, cell/quote/line/verified/severity/valence/cluster already assigned), NOT raw interview transcripts; synthesis starts directly at S6.5 (`score_insights.py`), without S1–S4.",
       "files": [
-        "mappings/"
+        "fixtures/mappings/nuggets.json"
       ]
     },
     {
