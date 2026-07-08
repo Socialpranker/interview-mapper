@@ -32,23 +32,37 @@ def get_clusters(data):
 TPL = """<!doctype html><html lang=ru><meta charset=utf-8>
 <title>{title}</title>
 <style>
-:root{{--bg:#0f1720;--card:#182533;--mut:#8aa0b4;--tx:#e7eef5;--in:#3fb950;--wl:#e3b341;--wk:#6e7681;--ten:#f778ba}}
-*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}}
-header{{padding:20px 24px;border-bottom:1px solid #223}}h1{{margin:0 0 4px;font-size:20px}}
-.sub{{color:var(--mut);font-size:13px}}
-.bar{{padding:12px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #223}}
-.bar button{{background:var(--card);color:var(--tx);border:1px solid #2a3a4a;border-radius:16px;padding:5px 12px;cursor:pointer;font-size:13px}}
-.bar button.on{{background:#243447;border-color:#3d5a7a}}
-.wrap{{padding:20px 24px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}}
-.card{{background:var(--card);border:1px solid #223;border-left:4px solid var(--wk);border-radius:10px;padding:14px 16px}}
-.card.insight{{border-left-color:var(--in)}}.card.watchlist{{border-left-color:var(--wl)}}
-.tag{{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#22303f;color:var(--mut);margin:0 4px 4px 0}}
-.tag.ten{{background:#3a2233;color:var(--ten)}}
-.title{{font-weight:600;margin:2px 0 8px}}
-.meta{{color:var(--mut);font-size:12px;margin-bottom:8px}}
-.ev{{border-top:1px solid #223;padding:7px 0;font-size:13px}}
-.q{{color:#cfe0f0}}.who{{color:var(--mut);font-size:12px}}
-.bad{{color:#f78;font-size:11px}}.ok{{color:var(--in);font-size:11px}}
+:root{{--paper:#fdfbf7;--ink:#1a1a1a;--pencil:#5a564c;--faint:#8a8578;--line:#e0ddd3;--rule:#c9c5b8;--flag:#a8402e}}
+*{{box-sizing:border-box}}
+body{{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 Georgia,Charter,"Times New Roman",serif}}
+header{{padding:22px 28px 16px;border-bottom:1px solid var(--ink)}}
+h1{{margin:0 0 4px;font-size:19px;font-weight:700;letter-spacing:.2px}}
+.sub{{color:var(--pencil);font-size:12.5px;font-style:italic}}
+.bar{{padding:12px 28px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);
+ font-family:"Courier New",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.4px}}
+.bar button{{background:none;color:var(--pencil);border:1px solid var(--rule);border-radius:0;padding:3px 9px;cursor:pointer;
+ font:inherit;text-transform:inherit;letter-spacing:inherit}}
+.bar button.on{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}
+.bar .sep{{color:var(--rule);padding:0 2px}}
+.wrap{{padding:22px 28px;display:grid;gap:24px 28px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
+.card{{border-top:1px solid var(--ink);padding-top:10px}}
+.card.watchlist{{border-top-color:var(--rule)}}
+.card.weak{{border-top:1px dashed var(--rule)}}
+.head{{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}}
+.title{{font-weight:700;font-size:15px}}
+.card.weak .title{{color:var(--faint);font-weight:400}}
+.n{{font-family:"Courier New",monospace;font-size:10.5px;color:var(--pencil)}}
+.status{{font-family:"Courier New",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;
+ display:inline-block;border-bottom:2px solid var(--ink);padding-bottom:2px;margin-bottom:6px}}
+.card.watchlist .status{{border-bottom-color:var(--rule);color:var(--pencil)}}
+.card.weak .status{{border-bottom:2px dashed var(--rule);color:var(--faint)}}
+.ten{{font-style:italic;font-size:12px;color:var(--pencil);margin-bottom:6px}}
+.meta{{color:var(--pencil);font-size:12px;margin-bottom:6px}}
+.card.weak .meta{{color:var(--faint)}}
+.ev{{border-top:1px solid var(--line);padding:9px 0;font-size:13.5px}}
+.card.weak .ev{{border-top-style:dashed;color:var(--pencil)}}
+.who{{font-family:"Courier New",monospace;color:var(--faint);font-size:10.5px;margin-top:4px}}
+.bad{{color:var(--flag);border-bottom:1px solid var(--flag)}}.ok{{color:var(--pencil)}}
 </style>
 <header><h1>{title}</h1><div class=sub>{sub}</div></header>
 <div class=bar id=filters></div>
@@ -60,27 +74,28 @@ let statusF='all',roleF='all';
 const roles=[...new Set(DATA.flatMap(c=>c.roles||[]))];
 function mk(el,cls,txt){{const e=document.createElement(el);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}}
 function btn(label,active,fn){{const b=mk('button',active?'on':'',label);b.onclick=fn;return b;}}
-function renderFilters(){{filters.innerHTML='';
+function renderFilters(){{filters.replaceChildren();
  ['all','insight','watchlist','weak'].forEach(s=>filters.append(btn(s,statusF===s,()=>{{statusF=s;draw();}})));
- filters.append(mk('span','',' · '));
+ filters.append(mk('span','sep','·'));
  ['all',...roles].forEach(r=>filters.append(btn(r,roleF===r,()=>{{roleF=r;draw();}})));
 }}
-function draw(){{renderFilters();wrap.innerHTML='';
+function draw(){{renderFilters();wrap.replaceChildren();
  DATA.filter(c=>(statusF==='all'||c.status===statusF)&&(roleF==='all'||(c.roles||[]).includes(roleF)))
  .forEach(c=>{{
   const card=mk('div','card '+c.status);
-  card.append(mk('div','title',c.title||c.cluster));
-  const tags=mk('div');
-  tags.append(mk('span','tag',c.status));
-  tags.append(mk('span','tag','распр: '+(c.prevalence||'')));
-  if(c.severity!=null)tags.append(mk('span','tag','крит: '+c.severity));
-  if(c.triangulated)tags.append(mk('span','tag','триангулирован'));
-  if(c.tension)tags.append(mk('span','tag ten','НАПРЯЖЕНИЕ'));
-  card.append(tags);
+  const head=mk('div','head');
+  head.append(mk('span','title',c.title||c.cluster));
+  const n=[];
+  if(c.prevalence)n.push('распр '+c.prevalence);
+  if(c.severity!=null)n.push('крит '+c.severity);
+  head.append(mk('span','n',n.join(' · ')));
+  card.append(head);
+  card.append(mk('div','status',c.status+(c.triangulated?' · триангулирован':'')));
+  if(c.tension)card.append(mk('div','ten','⚡ напряжение'));
   card.append(mk('div','meta','роли: '+((c.roles||[]).join(', '))));
   (c.evidence||[]).forEach(e=>{{
    const ev=mk('div','ev');
-   ev.append(mk('div','q','«'+(e.quote||'')+'»'));
+   ev.append(mk('div','','«'+(e.quote||'')+'»'));
    const w=mk('div','who',(e.interview||'?')+(e.role?' · '+e.role:'')+(e.line?' · L'+e.line:''));
    if(e.verified===false)w.append(mk('span','bad',' ⚠ не verified'));
    if(e.support==='no')w.append(mk('span','bad',' ⚠ не поддерживает'));
@@ -111,7 +126,7 @@ def main():
         n_iv = insights.get("total_interviews", "?")
     else:
         n_iv = summary.get("total_interviews", "?")
-    sub = f"кластеров: {len(clusters)} · интервью: {n_iv} · зелёный=инсайт, жёлтый=watchlist, серый=weak"
+    sub = f"кластеров: {len(clusters)} · интервью: {n_iv} · сплошная=инсайт, тонкая=watchlist, пунктир=weak"
     htmlout = TPL.format(title=html.escape(a.title), sub=html.escape(str(sub)),
                          data=json.dumps(clusters, ensure_ascii=False))
     open(a.out, "w", encoding="utf-8").write(htmlout)
