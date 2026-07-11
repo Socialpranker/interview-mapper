@@ -4,15 +4,14 @@ verify_quotes.py — verbatim-верификация цитат картиров
 
 Каскад (дёшево → дорого), по мотивам LLMCode / DeTAILS + fuzzy-практики:
   1) нормализация (регистр, пунктуация, филлеры, пробелы) + точное вхождение → verified_exact
-  2) fuzzy подстрока (rapidfuzz.partial_ratio_alignment, иначе difflib) → verified_fuzzy (+координаты, строка)
+  2) fuzzy подстрока (difflib) → verified_fuzzy (+координаты, строка)
   3) проверка покрытия LCS-долей (защита от снисходительности token-метрик)
   4) иначе → rejected  (или paraphrase, если задан --semantic-hint)
 
 Дословность != поддержка. Этот скрипт проверяет ТОЛЬКО дословность.
 Проверку «цитата ⊨ тезис» (entailment) делает модель отдельным шагом (см. SKILL.md).
 
-Зависимости: только stdlib. rapidfuzz используется, ЕСЛИ установлен (точнее и быстрее),
-иначе автоматически откат на difflib.
+Зависимости: только stdlib (difflib).
 
 CLI:
   python verify_quotes.py --transcript T.txt --claims claims.json [--threshold 88]
@@ -24,14 +23,6 @@ CLI:
 Выход: JSON со статусом на каждую цитату.
 """
 import argparse, json, re, sys, unicodedata
-
-# ---------- fuzzy backend (rapidfuzz optional, difflib fallback) ----------
-try:
-    from rapidfuzz import fuzz as _rf_fuzz
-    from rapidfuzz.distance import LCSseq as _rf_lcs
-    _HAS_RF = True
-except Exception:
-    _HAS_RF = False
 from difflib import SequenceMatcher
 
 
@@ -99,12 +90,6 @@ def fuzzy_score(needle: str, hay: str):
     """Возвращает (score 0..100, matched_substring_in_hay)."""
     if not needle or not hay:
         return 0.0, ""
-    if _HAS_RF:
-        al = _rf_fuzz.partial_ratio_alignment(needle, hay)
-        if al is None:
-            return 0.0, ""
-        return _rf_fuzz.partial_ratio(needle, hay), hay[al.dest_start:al.dest_end]
-    # difflib fallback: лучший блок
     sm = SequenceMatcher(None, needle, hay)
     blocks = sm.get_matching_blocks()
     best = max(blocks, key=lambda b: b.size) if blocks else None
@@ -199,7 +184,7 @@ def main():
     ap.add_argument("--transcript", required=True)
     ap.add_argument("--claims", required=True, help="JSON: список {cell,claim,quote,line?}")
     ap.add_argument("--threshold", type=float, default=88.0,
-                    help="Порог fuzzy (калибруй! rapidfuzz partial_ratio 0..100)")
+                    help="Порог fuzzy (калибруй! 0..100)")
     ap.add_argument("--min-coverage", type=float, default=0.6,
                     help="Мин. доля цитаты, покрытая дословным фрагментом")
     ap.add_argument("--window", type=int, default=6, help="±строк вокруг заявленной строки")
@@ -226,7 +211,7 @@ def main():
     n = len(results)
     ok = sum(1 for r in results if r["status"].startswith("verified"))
     summary = {
-        "backend": "rapidfuzz" if _HAS_RF else "difflib",
+        "backend": "difflib",
         "total": n, "verified": ok, "rejected": n - ok,
         "verified_share": round(ok / n, 3) if n else 0.0,
         "rejected_cells": [r["cell"] for r in results if r["status"] == "rejected"],

@@ -4,15 +4,14 @@ verify_quotes.py — verbatim verification of mapping quotes WITHOUT external AP
 
 Cascade (cheap → expensive), inspired by LLMCode / DeTAILS + fuzzy practices:
   1) normalization (case, punctuation, fillers, spaces) + exact match → verified_exact
-  2) fuzzy substring (rapidfuzz.partial_ratio_alignment, else difflib) → verified_fuzzy (+coordinates, line)
+  2) fuzzy substring (difflib) → verified_fuzzy (+coordinates, line)
   3) coverage check via LCS share (guard against the leniency of token metrics)
   4) otherwise → rejected  (or paraphrase, if --semantic-hint is given)
 
 Verbatim != support. This script checks ONLY verbatim-ness.
 The «quote ⊨ claim» (entailment) check is done by the model as a separate step (see SKILL.md).
 
-Dependencies: stdlib only. rapidfuzz is used IF installed (more accurate and faster),
-otherwise it automatically falls back to difflib.
+Dependencies: stdlib only (difflib).
 
 CLI:
   python verify_quotes.py --transcript T.txt --claims claims.json [--threshold 88]
@@ -24,14 +23,6 @@ Formats:
 Output: JSON with a status for each quote.
 """
 import argparse, json, re, sys, unicodedata
-
-# ---------- fuzzy backend (rapidfuzz optional, difflib fallback) ----------
-try:
-    from rapidfuzz import fuzz as _rf_fuzz
-    from rapidfuzz.distance import LCSseq as _rf_lcs
-    _HAS_RF = True
-except Exception:
-    _HAS_RF = False
 from difflib import SequenceMatcher
 
 
@@ -99,12 +90,6 @@ def fuzzy_score(needle: str, hay: str):
     """Returns (score 0..100, matched_substring_in_hay)."""
     if not needle or not hay:
         return 0.0, ""
-    if _HAS_RF:
-        al = _rf_fuzz.partial_ratio_alignment(needle, hay)
-        if al is None:
-            return 0.0, ""
-        return _rf_fuzz.partial_ratio(needle, hay), hay[al.dest_start:al.dest_end]
-    # difflib fallback: best block
     sm = SequenceMatcher(None, needle, hay)
     blocks = sm.get_matching_blocks()
     best = max(blocks, key=lambda b: b.size) if blocks else None
@@ -199,7 +184,7 @@ def main():
     ap.add_argument("--transcript", required=True)
     ap.add_argument("--claims", required=True, help="JSON: list of {cell,claim,quote,line?}")
     ap.add_argument("--threshold", type=float, default=88.0,
-                    help="Fuzzy threshold (calibrate! rapidfuzz partial_ratio 0..100)")
+                    help="Fuzzy threshold (calibrate! 0..100)")
     ap.add_argument("--min-coverage", type=float, default=0.6,
                     help="Min. share of the quote covered by a verbatim fragment")
     ap.add_argument("--window", type=int, default=6, help="±lines around the claimed line")
@@ -226,7 +211,7 @@ def main():
     n = len(results)
     ok = sum(1 for r in results if r["status"].startswith("verified"))
     summary = {
-        "backend": "rapidfuzz" if _HAS_RF else "difflib",
+        "backend": "difflib",
         "total": n, "verified": ok, "rejected": n - ok,
         "verified_share": round(ok / n, 3) if n else 0.0,
         "rejected_cells": [r["cell"] for r in results if r["status"] == "rejected"],

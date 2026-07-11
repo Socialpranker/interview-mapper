@@ -5,21 +5,34 @@ number_lines.py — number a transcript line by line for quote traceability.
 Every quote in a mapping must reference a line number; verify_quotes.py then
 checks the match. LLMs handle line numbers poorly «in their head» — so we number by script.
 
-Supports .txt and .docx (if python-docx is installed; otherwise asks you to convert).
+Supports .txt and .docx (stdlib parsing, no external dependencies).
 
 CLI:  python number_lines.py input.txt [--out output.txt]
 Output: lines of the form 'L1: ...', 'L2: ...'
 """
-import argparse, sys, os
+import argparse, sys, os, zipfile
+from xml.etree import ElementTree as ET
+
+_W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+def read_docx(path):
+    """Reads .docx text via stdlib (zipfile + XML): paragraphs from word/document.xml, text from <w:t>."""
+    with zipfile.ZipFile(path) as z:
+        xml = z.read("word/document.xml")
+    root = ET.fromstring(xml)
+    paragraphs = []
+    for p in root.iter(f"{_W_NS}p"):
+        text = "".join(t.text or "" for t in p.iter(f"{_W_NS}t"))
+        paragraphs.append(text)
+    return "\n".join(paragraphs)
 
 def read_text(path):
-    """Reads .txt or .docx (if python-docx is installed); errors → a clear message, exit 1."""
+    """Reads .txt or .docx (stdlib parsing); errors → a clear message, exit 1."""
     if path.lower().endswith(".docx"):
         try:
-            import docx
-        except Exception:
-            sys.exit("python-docx is required for .docx: pip install python-docx --break-system-packages")
-        return "\n".join(p.text for p in docx.Document(path).paragraphs)
+            return read_docx(path)
+        except (zipfile.BadZipFile, KeyError, ET.ParseError) as e:
+            sys.exit(f"error: {path}: failed to read .docx ({e})")
     try:
         with open(path, encoding="utf-8") as f:
             return f.read()

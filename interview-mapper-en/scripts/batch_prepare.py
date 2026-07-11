@@ -7,16 +7,29 @@ Lets you run a pool of N interviews without manual fuss. The mappings themselves
 
 CLI: python batch_prepare.py /path/to/transcripts [--out manifest.json]
 """
-import argparse, json, os, re, glob, sys
+import argparse, json, os, re, glob, sys, zipfile
+from xml.etree import ElementTree as ET
+
+_W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+def read_docx(path):
+    """Reads .docx text via stdlib (zipfile + XML): paragraphs from word/document.xml, text from <w:t>."""
+    with zipfile.ZipFile(path) as z:
+        xml = z.read("word/document.xml")
+    root = ET.fromstring(xml)
+    paragraphs = []
+    for p in root.iter(f"{_W_NS}p"):
+        text = "".join(t.text or "" for t in p.iter(f"{_W_NS}t"))
+        paragraphs.append(text)
+    return "\n".join(paragraphs)
 
 def read_text(path):
-    """Reads .txt or .docx (if python-docx is installed); OSError → a clear error, exit 1."""
+    """Reads .txt or .docx (stdlib parsing); OSError → a clear error, exit 1."""
     if path.lower().endswith(".docx"):
         try:
-            import docx
-        except Exception:
-            return None  # mark in the manifest as requiring conversion
-        return "\n".join(p.text for p in docx.Document(path).paragraphs)
+            return read_docx(path)
+        except (zipfile.BadZipFile, KeyError, ET.ParseError) as e:
+            sys.exit(f"error: {path}: failed to read .docx ({e})")
     try:
         with open(path, encoding="utf-8") as f:
             return f.read()
@@ -47,9 +60,6 @@ def main():
     for f in files:
         text = read_text(f)
         entry = {"interview": interview_name(f), "transcript": f, "role": None}
-        if text is None:
-            entry["status"] = "needs_docx_lib"
-            manifest.append(entry); continue
         nl = os.path.splitext(f)[0] + "_nl.txt"
         numbered = "\n".join(f"L{i}: {ln}" for i, ln in enumerate(text.splitlines(), 1))
         open(nl, "w", encoding="utf-8").write(numbered)
