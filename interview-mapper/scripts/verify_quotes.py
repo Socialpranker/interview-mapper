@@ -90,22 +90,28 @@ def fuzzy_score(needle: str, hay: str):
     """Возвращает (score 0..100, matched_substring_in_hay)."""
     if not needle or not hay:
         return 0.0, ""
-    sm = SequenceMatcher(None, needle, hay)
+    # autojunk=False обязателен: на hay >200 символов эвристика объявляет "мусором" частые
+    # символы (пробел, гласные) и матчинг разваливается — скор одной и той же цитаты скачет
+    # 0..96 в зависимости от позиции в тексте.
+    sm = SequenceMatcher(None, needle, hay, autojunk=False)
     blocks = sm.get_matching_blocks()
     best = max(blocks, key=lambda b: b.size) if blocks else None
     if not best or best.size == 0:
         return 0.0, ""
-    start = max(0, best.b - 2)
-    end = min(len(hay), best.b + best.size + 2)
+    # Окно — по длине ЦИТАТЫ от предполагаемого начала (best.b - best.a), а не по длине
+    # совпавшего блока: одно выпавшее слово рвёт цитату на два блока, и окно по блоку
+    # сравнивало бы цитату с её же половиной.
+    start = max(0, best.b - best.a)
+    end = min(len(hay), start + len(needle))
     window = hay[start:end]
-    score = SequenceMatcher(None, needle, window).ratio() * 100
+    score = SequenceMatcher(None, needle, window, autojunk=False).ratio() * 100
     return score, window
 
 def lcs_coverage(needle: str, hay: str) -> float:
     """Доля цитаты, покрытая самым длинным общим фрагментом (0..1)."""
     if not needle:
         return 0.0
-    sm = SequenceMatcher(None, needle, hay)
+    sm = SequenceMatcher(None, needle, hay, autojunk=False)
     total = sum(b.size for b in sm.get_matching_blocks())
     return min(1.0, total / max(1, len(needle)))
 

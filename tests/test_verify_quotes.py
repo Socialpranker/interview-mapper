@@ -12,6 +12,13 @@ TRANSCRIPT = (
     "L3: Никто не знает, где лежат актуальные данные\n"
 )
 
+# >200 символов — порог, за которым включается autojunk-эвристика SequenceMatcher.
+LONG_TRANSCRIPT = TRANSCRIPT + "".join(
+    "L%d: Мы обсуждали это на планёрке в четверг и решили, что переносить сроки нельзя, "
+    "потому что подрядчик уже закупил материалы и ждёт отмашки от нас\n" % i
+    for i in range(4, 12)
+)
+
 
 def _mods():
     return [(lang, load_script(lang, "verify_quotes")) for lang in LANGS]
@@ -60,17 +67,32 @@ class TestVerifyCascade(unittest.TestCase):
                 self.assertEqual(r["line_found"], 1)
 
     def test_fuzzy_with_noise(self):
-        # выпало слово «я» — не exact, но fuzzy должен пройти.
-        # Порог 85.0 с запасом ниже ОБЕИХ веток бэкенда: difflib ≈ 86.97,
-        # rapidfuzz ≈ 94.3 — тест зелёный независимо от того, установлен ли
-        # rapidfuzz. (Дефолт 88.0 на difflib этот кейс режет — вход для
-        # калибровки порогов, см. Task 5.)
+        # Выпало слово «я» — не exact, но fuzzy должен пройти при ДЕФОЛТНОМ пороге 88.
         for lang, m in _mods():
             with self.subTest(lang=lang):
                 lines, nf, idx = self._setup(m)
                 r = m.verify_one("Отчет собираю руками каждую пятницу",
-                                 lines, nf, idx, 85.0, 0.6, 6, None)
+                                 lines, nf, idx, 88.0, 0.6, 6, None)
                 self.assertTrue(r["status"].startswith("verified"), r)
+
+    def test_fuzzy_noise_in_long_transcript(self):
+        """Регрессия: autojunk SequenceMatcher разваливал скор на текстах >200 символов.
+
+        Тот же шум в коротком и в длинном транскрипте обязан давать один и тот же вердикт.
+        До фикса длинный вариант давал скор порядка 8 и rejected.
+        """
+        for lang, m in _mods():
+            with self.subTest(lang=lang):
+                lines = m.parse_lines(LONG_TRANSCRIPT)
+                nf, idx = m.build_index(lines)
+                self.assertGreater(len(nf), 200)
+                r = m.verify_one("Отчет собираю руками каждую пятницу",
+                                 lines, nf, idx, 88.0, 0.6, 6, None)
+                self.assertTrue(r["status"].startswith("verified"), r)
+                # Точность не куплена ценой ложных подтверждений.
+                bad = m.verify_one("Мы внедрили новую CRM и все довольны",
+                                   lines, nf, idx, 88.0, 0.6, 6, None)
+                self.assertEqual(bad["status"], "rejected", bad)
 
     def test_hallucination_rejected(self):
         for lang, m in _mods():
