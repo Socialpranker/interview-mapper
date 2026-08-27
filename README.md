@@ -134,7 +134,7 @@ python scripts/compare_to_gold.py --gold gold.md --ai ai_mapping.md --lens templ
 │   ├── templates/             # 16 lenses
 │   ├── outputs/               # 5 outputs
 │   ├── references/            # pipeline, reliability, synthesis, rubric, validation, intake, ethics
-│   ├── scripts/               # 14 stdlib-only tools
+│   ├── scripts/               # 15 stdlib-only tools
 │   └── evals/                 # eval prompts
 ├── interview-mapper.skill     # installable RU package
 ├── interview-mapper-en.skill  # installable EN package

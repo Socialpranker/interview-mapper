@@ -30,7 +30,7 @@ Don't start mapping until both are clear. Ask adaptively (details — `reference
 
 Then lock the route with a script:
 `python scripts/route.py --goal <goal> --respondent <who> [--output <output> --n <N> --baseline yes]`
-→ returns the lens, output, and applicable steps (including the warning "n<k → watchlist only").
+→ returns the lens, output, the applicable steps (including the warning "n<k → watchlist only") and a cost estimate: how many times the transcripts get read in full. The main lever is `--council-runs` (S3 feeds the transcript anew on every run).
 
 ### Axis 1 — Lenses (how to extract from ONE interview)
 | Lens | For whom | Template |
@@ -68,6 +68,8 @@ you cannot re-attribute speakers by eye.
 | Opportunities/prioritization | roadmap input | `outputs/opportunity-prioritization.md` |
 | Decision memo | for one stakeholder decision | `outputs/decision-memo.md` |
 
+**Exercise status:** only the `candidate` lens has been through a human comparison (see `evals/fixtures/candidate/review-example.md`). The other fifteen have never left the synthetic fixtures — which does not mean "broken", it means "unverified": treat the first run of such a lens on a real interview as a pilot and check it against `references/rubric.md`.
+
 All lenses share one backbone (Framework Method, two layers: facts + analysis). Principle: **few artifacts, smart routing** — `N lenses × M outputs` cover `N×M` tasks. Don't spawn duplicates: for a new task, first check (lens + output).
 
 ## Pipeline S0.5–S4
@@ -95,8 +97,11 @@ For several interviews: `python scripts/batch_prepare.py folder/` — numbers li
    Statuses: `verified_exact/fuzzy` — ok; `rejected` — quote not in source (regeneration/fabrication) → fix or drop. `--emit-enriched` returns quotes with the line filled in.
 4. **Check support (entailment) — a required, logged step, not "by eye".** For each quote give a verdict `support ∈ {yes,partial,no}` + why in `support.json`, run it a second time independently (judge-2), then
    `python scripts/check_support.py support.json --second support2.json`.
-   The script catches `dangerous` (quote is verbatim but the thesis is NOT supported by it — verbatim ≠ support) and `judge_disagreements` → soften both / send to a human.
-5. **Counterfactual pass:** "what in the data CONTRADICTS these conclusions? which fragments landed in no cell?" (omission-check — omissions are more dangerous than fabrications).
+   **Judge 2 asks the OPPOSITE question, not the same one.** Repeating one prompt with one model buys agreement with itself at the price of two runs. Judge-2 prompt — `python scripts/check_support.py --judge2-prompt`.
+   The script catches `dangerous` (quote is verbatim but the thesis is NOT supported by it — verbatim ≠ support), `judge_disagreements` → soften both / send to a human, and `judge_agreement_suspicious` (the judges never diverged — judge 2 echoed judge 1).
+5. **Counterfactual pass + omission:** "what in the data CONTRADICTS these conclusions?" — by eye; "what landed in no cell" — by script, not by eye:
+   `python scripts/coverage_gaps.py --transcript *_nl.txt --claims claims.json --skip-speaker "Interviewer|Moderator"`.
+   Returns blocks of utterances covered by no confirmed quote, largest first. Uncovered is not a verdict (small talk happens) but a list of places to look. Omissions are more dangerous than fabrications.
 
 > verify/score thresholds are calibrated on synthetic data (`references/reliability.md`), not on real data. Before production use, calibrate: `references/validation.md` + `scripts/calibrate_threshold.py`.
 
@@ -109,7 +114,7 @@ marked *(unstable)* in the template; never re-run Layer 1. N=1 is fine for a pil
 2. Save runs as json `{ "A1": {"label":"...","text":"..."}, ... }`.
 3. Aggregate: `python scripts/consensus.py run1.json run2.json run3.json --weights <by share of valid quotes>`.
    - `flagged` — runs disagreed on the label → **a human adjudicates blind**, don't pick yourself.
-   - agreeing cells — consensus.
+   - agreeing cells — consensus, but: `unanimous_but_ungrounded` — they agreed across weakly grounded runs (agreement may mean identical bias, not correctness); `council_degenerate` — not a single cell diverged, which usually means the runs were not independent (chat history fed instead of a fresh context).
 4. A run's weight ↓ if it has many `rejected` quotes (poorly grounded).
 5. For flagged cells — prepare the human a fork: `python scripts/make_adjudication.py consensus.json run1.json run2.json …` → cards with options side by side.
 
@@ -145,7 +150,8 @@ The score is set by a human blind, not by the AI itself.
 | `number_lines.py` | line numbering (.txt/.docx/.srt/.vtt) + timecodes + untrusted-input flags | S1 |
 | `extract_claims.py` | mapping.md → claims.json | S2 |
 | `verify_quotes.py` | verbatim (+ `--emit-enriched` sets the line) | S2 |
-| `check_support.py` | entailment: quote ⊨ thesis, judge-2, catches `dangerous` | S2 |
+| `check_support.py` | entailment: quote ⊨ thesis, refuting judge-2, catches `dangerous` | S2 |
+| `coverage_gaps.py` | omission: which utterances no quote covers | S2 |
 | `calibrate_threshold.py` | threshold calibration on a gold-set | validation |
 | `consensus.py` | council: agreement/flag on unstable cells | S3 |
 | `make_adjudication.py` | fork cards for a human | S3 |

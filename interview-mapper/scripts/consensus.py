@@ -105,6 +105,8 @@ def main():
                     help="Жёсткий пол текстовой близости для БЕЗ-ярлычных ячеек: ниже = содержание "
                          "существенно разошлось → флаг. Разные формулировки при том же смысле сюда НЕ попадают.")
     ap.add_argument("--stability", type=float, default=None, help="deprecated alias of --text-floor")
+    ap.add_argument("--grounding-floor", type=float, default=0.6,
+                    help="Ниже этой средней заземлённости прогонов единогласие подозрительно")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
 
@@ -127,6 +129,8 @@ def main():
     report = {}
     flags = []
     low_stab = []
+    ungrounded = []
+    mean_weight = sum(weights) / len(weights) if weights else 1.0
     for cell in cells:
         entries = [r.get(cell, {"label": None, "text": ""}) for r in runs]
         labels = [e["label"] for e in entries]
@@ -143,6 +147,11 @@ def main():
             # Любое разногласие ярлыка → человек решает. Согласие по сути при разной формулировке — не флаг.
             if agree != "unanimous":
                 flag = True
+            # Единогласие само по себе НЕ означает «верно»: прогоны могли сойтись потому,
+            # что одинаково смещены. Признак — согласие при слабо заземлённых прогонах.
+            elif mean_weight < a.grounding_floor:
+                ungrounded.append(cell)
+                rec["unanimous_but_ungrounded"] = True
         else:
             # без ярлыка: флаг лишь при СУЩЕСТВЕННОМ расхождении содержания
             if stab < text_floor:
@@ -155,6 +164,9 @@ def main():
             flags.append(cell)
         report[cell] = rec
 
+    # Три независимых прогона аналитики, сошедшихся ВЕЗДЕ, — не удача, а признак,
+    # что независимости не было.
+    degenerate = N >= 3 and len(cells) >= 5 and not flags
     summary = {
         "runs": N,
         "weights": weights,
@@ -162,8 +174,15 @@ def main():
         "cells_flagged": len(flags),
         "flagged": flags,
         "low_stability_hint": low_stab,
+        "unanimous_but_ungrounded": ungrounded,
+        "council_degenerate": degenerate,
         "note": "flagged = разногласие по существу → человек адъюдицирует вслепую. "
-                "low_stability_hint = согласие по сути, но разные формулировки (мягко, можно игнорировать).",
+                "low_stability_hint = согласие по сути, но разные формулировки (мягко, можно игнорировать). "
+                "unanimous_but_ungrounded = прогоны сошлись, но заземлены слабо: это согласие "
+                "не подтверждает вывод, оно может значить одинаковое смещение (нужны --weights = "
+                "verified_share прогонов, иначе признак не считается). "
+                "council_degenerate = не разошлась НИ ОДНА ячейка: обычно значит, что прогоны не были "
+                "независимыми — подали историю чата вместо свежего контекста (star-model, S3.1).",
     }
     out = {"summary": summary, "cells": report}
     js = json.dumps(out, ensure_ascii=False, indent=2)

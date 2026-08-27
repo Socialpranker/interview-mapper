@@ -66,6 +66,27 @@ def choose_lens(goal, respondent):
         return "templates/brand-positioning.md"
     return LENS.get(respondent, "templates/org-mapping-vmdi.md")
 
+def cost_estimate(n, council_runs, synthesis_reruns, avg_lines):
+    """Оценка объёма работы: сколько раз транскрипты будут прочитаны целиком.
+
+    S3 подаёт транскрипт заново на каждый прогон (star-model, re-grounding), поэтому цена растёт
+    не как «N интервью», а как «N × прогонов». Без цифры выбор между N=3 и N=1 делается на глаз.
+    """
+    per_interview = 1 + council_runs  # S2 один раз + совет надёжности
+    feeds = n * per_interview + synthesis_reruns  # синтез перечитывает картирования, не транскрипты
+    approx_tokens = feeds * avg_lines * 15  # ~15 токенов на строку расшифровки, порядок величины
+    return {
+        "transcript_feeds": feeds,
+        "per_interview_feeds": per_interview,
+        "assumed_lines_per_transcript": avg_lines,
+        "approx_input_tokens": approx_tokens,
+        "note": ("Порядок величины, не счёт: считает подачи транскрипта, а не реальные токены. "
+                 "Главный рычаг — council_runs: S3 нужен ТОЛЬКО для ячеек Слоя 2, помеченных "
+                 "(нестабильная). N=1 допустим для пилота, но в выводе тогда пиши «совет не "
+                 "проводился», а не «консенсус»."),
+    }
+
+
 def main():
     """CLI: строит детерминированный план пайплайна по интейку (цель/респондент/выход/N)."""
     ap = argparse.ArgumentParser()
@@ -74,6 +95,10 @@ def main():
     ap.add_argument("--output", default=None, help="если не задан — выведем рекомендованный по цели")
     ap.add_argument("--n", type=int, default=1)
     ap.add_argument("--baseline", default="no")
+    ap.add_argument("--council-runs", type=int, default=3,
+                    help="Прогонов Слоя 2 в S3 (влияет на оценку стоимости; 1 = совет не проводится)")
+    ap.add_argument("--avg-lines", type=int, default=80,
+                    help="Средняя длина расшифровки в строках — для оценки стоимости")
     a = ap.parse_args()
 
     lens = choose_lens(a.goal, a.respondent)
@@ -119,6 +144,8 @@ def main():
         "lens": lens, "output": out_file, "output_kind": out_key,
         "can_synthesize_patterns": can_synthesize, "k_triangulation": K,
         "pipeline": steps,
+        "cost": cost_estimate(a.n, max(0, a.council_runs), 2 if can_synthesize else 0,
+                              a.avg_lines),
         "caveats": caveats,
     }
     print(json.dumps(plan, ensure_ascii=False, indent=2))
