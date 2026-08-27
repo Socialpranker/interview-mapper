@@ -13,6 +13,8 @@ Thumbs.db
 
 # Generated pipeline artifacts (regenerated per run)
 *_nl.txt
+*_nl.timecodes.json
+*_nl.flags.json
 *_claims.json
 *_nuggets.json
 scored.json
