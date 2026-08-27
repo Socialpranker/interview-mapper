@@ -11,7 +11,7 @@ Thanks for your interest! This project is a Claude/Cowork **skill** plus stdlib-
 
 ## Repo structure
 - `interview-mapper/` (RU) and `interview-mapper-en/` (EN) are parallel — **keep them in sync**. A change to one usually needs the mirror change to the other.
-- Scripts are **stdlib-only** by contract (`rapidfuzz` optional with `difflib` fallback). Don't add hard dependencies.
+- Scripts are **stdlib-only** by contract — no optional packages either. Don't add dependencies: fuzzy matching is `difflib`, `.docx` is `zipfile`+`ElementTree`, `.srt/.vtt` is a bundled parser.
 - Data field names / JSON keys are a contract shared between scripts — renaming one means updating all consumers.
 
 ## Dev checks

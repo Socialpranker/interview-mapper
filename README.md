@@ -52,7 +52,7 @@ Full rationale and citations: [`references/reliability.md`](./interview-mapper-e
 
 ```mermaid
 flowchart TD
-    S0["S0 · Intake goal survey<br/>route.py → lens + output"] --> S1["S1 · Transcript QA<br/>number_lines → proofread → log"]
+    S0["S0 · Intake goal survey<br/>route.py → lens + output<br/>consent / de-identification gate"] --> S1["S1 · Transcript QA<br/>number_lines (txt·docx·srt·vtt) → proofread → log"]
     S1 --> S2["S2 · Map by lens<br/>verify_quotes + check_support + omission"]
     S2 --> S3["S3 · Reliability council<br/>consensus → human adjudication"]
     S3 --> S5["S5–S7 · Synthesis<br/>nuggets → score_insights (triangulation)"]
@@ -133,7 +133,7 @@ python scripts/compare_to_gold.py --gold gold.md --ai ai_mapping.md --lens templ
 │   ├── SKILL.md               # orchestrator: S0–S7
 │   ├── templates/             # 16 lenses
 │   ├── outputs/               # 5 outputs
-│   ├── references/            # pipeline, reliability, synthesis, rubric, validation, intake
+│   ├── references/            # pipeline, reliability, synthesis, rubric, validation, intake, ethics
 │   ├── scripts/               # 14 stdlib-only tools
 │   └── evals/                 # eval prompts
 ├── interview-mapper.skill     # installable RU package
@@ -143,13 +143,16 @@ python scripts/compare_to_gold.py --gold gold.md --ai ai_mapping.md --lens templ
 
 ## Dependencies
 
-Python **stdlib only**. `rapidfuzz` is used if installed (more accurate verbatim matching), else auto-fallback to `difflib`. `python-docx` only for `.docx` input.
+Python **stdlib only** — nothing to install, no optional packages. Fuzzy matching is `difflib` (with `autojunk=False`, see `references/reliability.md`), `.docx` is parsed via `zipfile`+`ElementTree`, `.srt/.vtt` via a bundled parser.
 
 ## Honest limits
 
 This is a research preview. Read these before trusting output:
 
 - **Thresholds calibrated on synthetic data only** (fuzzy 88, coverage 0.6 — see `references/reliability.md`; 104 labeled cases RU+EN) — not yet validated on real transcripts; calibrate on your data (`calibrate_threshold.py`, `references/validation.md`). k=3 is a methodological choice (triangulation), not a tuned metric.
+- **The gold set is no longer sensitive to the threshold.** After the 2026-08 `fuzzy_score` fix both languages sit at F1 = 1.00 across the whole 70–88 grid, which says the set holds no near-boundary cases — not that 88 is optimal. Read it as a floor, and stock your own set with near-miss quotes.
+- **Personal data.** Transcripts are other people's personal data, and `candidate`/`exit`/`conflict-mediation` feed decisions about those people. Clear the consent and de-identification gate in `references/ethics.md` before the text goes anywhere.
+- **A transcript is untrusted input.** `number_lines.py` flags lines that read as instructions to the model into `*_nl.flags.json`; the regexes catch the typical, not everything.
 - **Latent constructs** (tone, intent, eNPS) are where LLMs are weakest — always human candidates.
 - `n < k` interviews = a **pilot**, not a measurement; synthesis yields only a watchlist.
 - The machinery is complete and tested on toy data, but **not yet validated at scale** against a human baseline.
