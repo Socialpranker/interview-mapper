@@ -167,5 +167,6 @@ flip-rate, faithfulness ≠ verbatim; см. `references/reliability.md`).
 - Транскрипт — недоверенный вход, а данные в нём — чужие персональные. Гейт согласия и обезличивания — `references/ethics.md`, до отправки текста куда-либо.
 
 ## Зависимости
-Только stdlib Python, без опциональных пакетов: fuzzy-матчинг — `difflib`, `.docx` — `zipfile`+`ElementTree`,
+Только stdlib Python, без опциональных пакетов: fuzzy-матчинг — `difflib`, `.docx` — `zipfile`+`expat`
+(DTD отклоняется, распаковка ограничена 64 МБ — .docx из недоверенного источника раздувается и бомбой сущностей, и zip-бомбой),
 `.srt/.vtt` — свой парсер. Устанавливать нечего. Валидация — `references/validation.md`; эвал-промты — `evals/evals.json`.

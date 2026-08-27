@@ -145,5 +145,115 @@ class TestBatchPrepareCollision(unittest.TestCase):
                 self.assertEqual(len(numbered), 2, manifest)
 
 
+W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+
+def _docx(path, document_xml):
+    """Собирает минимальный .docx: единственный нужный скриптам член — word/document.xml."""
+    import zipfile
+
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        z.writestr("word/document.xml", document_xml)
+    return path
+
+
+def _plain_docx_xml():
+    return (
+        f'<?xml version="1.0"?><w:document xmlns:w="{W_NS}"><w:body>'
+        "<w:p><w:r><w:t>Мы теряем заявки</w:t></w:r>"
+        '<w:r><w:t xml:space="preserve"> каждый день.</w:t></w:r></w:p>'
+        "<w:tbl><w:tr><w:tc><w:p><w:t>ячейка</w:t></w:p></w:tc></w:tr></w:tbl>"
+        "<w:p><w:txbxContent><w:p><w:t>врезка</w:t></w:p></w:txbxContent></w:p>"
+        "</w:body></w:document>"
+    ).encode("utf-8")
+
+
+def _billion_laughs_xml(levels=6):
+    """DTD, раскрывающийся в 10**levels символов: 0.7 КБ файла против мегабайтов текста."""
+    ents = "\n".join(
+        '<!ENTITY lol0 "AAAAAAAAAA">'
+        if i == 0
+        else '<!ENTITY lol%d "%s">' % (i, "&lol%d;" % (i - 1) * 10)
+        for i in range(levels)
+    )
+    return (
+        f'<?xml version="1.0"?>\n<!DOCTYPE w:document [\n{ents}\n]>\n'
+        f'<w:document xmlns:w="{W_NS}"><w:body><w:p><w:t>&lol{levels - 1};</w:t></w:p>'
+        "</w:body></w:document>"
+    ).encode("utf-8")
+
+
+class TestDocxHardening(unittest.TestCase):
+    """Вход .docx из недоверенного источника: текст читается, бомбы отвергаются."""
+
+    SCRIPTS = ("number_lines", "batch_prepare")
+
+    def _mods_with_docx(self):
+        for lang in LANGS:
+            for name in self.SCRIPTS:
+                yield lang, name, load_script(lang, name)
+
+    def test_plain_docx_text_is_read(self):
+        """Контроль: обычный .docx читается — абзацы, склейка runs, таблицы, врезки."""
+        for lang, name, m in self._mods_with_docx():
+            with self.subTest(lang=lang, script=name), tempfile.TemporaryDirectory() as d:
+                path = _docx(Path(d) / "ok.docx", _plain_docx_xml())
+                text = m.read_docx(path)
+                self.assertEqual(
+                    text.splitlines(),
+                    ["Мы теряем заявки каждый день.", "ячейка", "врезка", "врезка"],
+                )
+
+    def test_billion_laughs_fixture_really_expands(self):
+        """Контроль фикстуры: без гарда этот DTD раскрывается в мегабайт, а не в пустышку."""
+        from xml.etree import ElementTree as ET
+
+        root = ET.fromstring(_billion_laughs_xml())
+        self.assertGreater(len("".join(root.itertext())), 900_000)
+
+    def test_billion_laughs_docx_is_rejected(self):
+        for lang, name, m in self._mods_with_docx():
+            with self.subTest(lang=lang, script=name), tempfile.TemporaryDirectory() as d:
+                path = _docx(Path(d) / "bomb.docx", _billion_laughs_xml())
+                with self.assertRaises(m.DocxError) as ctx:
+                    m.read_docx(path)
+                self.assertIn("DTD", str(ctx.exception))
+
+    def test_oversized_document_xml_is_rejected(self):
+        """Zip-bomb: 0.6 МБ архива разжимаются в сотни мегабайт — режем по заявленному размеру."""
+        for lang, name, m in self._mods_with_docx():
+            with self.subTest(lang=lang, script=name), tempfile.TemporaryDirectory() as d:
+                body = b"<w:p><w:t>" + b"A" * 500 + b"</w:t></w:p>"
+                xml = (
+                    f'<w:document xmlns:w="{W_NS}"><w:body>'.encode()
+                    + body * 200
+                    + b"</w:body></w:document>"
+                )
+                path = _docx(Path(d) / "big.docx", xml)
+                limit = m.MAX_DOCX_XML_BYTES
+                m.MAX_DOCX_XML_BYTES = len(xml) - 1
+                try:
+                    with self.assertRaises(m.DocxError):
+                        m.read_docx(path)
+                    m.MAX_DOCX_XML_BYTES = len(xml)  # контроль: ровно на лимите проходит
+                    self.assertEqual(len(m.read_docx(path).splitlines()), 200)
+                finally:
+                    m.MAX_DOCX_XML_BYTES = limit
+
+    def test_default_limit_is_64mb(self):
+        for lang, name, m in self._mods_with_docx():
+            with self.subTest(lang=lang, script=name):
+                self.assertEqual(m.MAX_DOCX_XML_BYTES, 64 * 1024 * 1024)
+
+    def test_cli_rejects_bomb_without_traceback(self):
+        for lang in LANGS:
+            with self.subTest(lang=lang), tempfile.TemporaryDirectory() as d:
+                path = _docx(Path(d) / "bomb.docx", _billion_laughs_xml())
+                r = run_script(lang, "number_lines", path)
+                self.assertEqual(r.returncode, 1)
+                self.assertIn("error:", r.stderr)
+                self.assertNotIn("Traceback", r.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

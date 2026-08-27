@@ -11,9 +11,16 @@ batch_prepare.py — подготовить папку транскриптов 
 CLI: python batch_prepare.py /path/to/transcripts [--out manifest.json]
 """
 import argparse, json, os, re, glob, sys, zipfile
-from xml.etree import ElementTree as ET
+from xml.parsers import expat
 
-_W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+_W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_NS_SEP = "|"
+_W_P = f"{_W_NS}{_NS_SEP}p"
+_W_T = f"{_W_NS}{_NS_SEP}t"
+
+# .docx из недоверенного источника раздувается двумя способами: 0.6 МБ архива
+# разжимаются в 208 МБ XML, а 700 байт DTD с вложенными сущностями — в гигабайты.
+MAX_DOCX_XML_BYTES = 64 * 1024 * 1024
 
 # Текст, адресованный модели, а не интервьюеру: перехват инструкций и маркеры разметки промпта.
 INJECTION_PATTERNS = [
@@ -40,16 +47,78 @@ _VOICE_RE = re.compile(r"<v\s+([^>]+)>(.*?)(?:</v>|$)", re.IGNORECASE | re.DOTAL
 _TAG_RE = re.compile(r"<[^>]+>")
 
 
-def read_docx(path):
-    """Читает текст .docx через stdlib (zipfile + XML): абзацы word/document.xml, текст из <w:t>."""
+class DocxError(Exception):
+    """.docx не читается безопасно: битый XML, DTD или превышен лимит распаковки."""
+
+
+def _read_document_xml(path):
+    """Достаёт word/document.xml, отказываясь распаковывать больше лимита.
+
+    Работает заголовочная проверка: zipfile сам обрывает чтение на заявленном
+    размере и ловит расхождение по CRC, так что занижением заголовка лимит не
+    обойти. Второй чек, по фактически прочитанному, — страховка на случай, если
+    архив прочитается иначе, чем обещал заголовок.
+    """
     with zipfile.ZipFile(path) as z:
-        xml = z.read("word/document.xml")
-    root = ET.fromstring(xml)
-    paragraphs = []
-    for p in root.iter(f"{_W_NS}p"):
-        text = "".join(t.text or "" for t in p.iter(f"{_W_NS}t"))
-        paragraphs.append(text)
-    return "\n".join(paragraphs)
+        info = z.getinfo("word/document.xml")
+        if info.file_size > MAX_DOCX_XML_BYTES:
+            raise DocxError(
+                f"word/document.xml заявляет {info.file_size} байт "
+                f"при лимите {MAX_DOCX_XML_BYTES}"
+            )
+        with z.open("word/document.xml") as fh:
+            xml = fh.read(MAX_DOCX_XML_BYTES + 1)
+    if len(xml) > MAX_DOCX_XML_BYTES:
+        raise DocxError(f"word/document.xml больше лимита {MAX_DOCX_XML_BYTES} байт")
+    return xml
+
+
+def read_docx(path):
+    """Читает текст .docx через stdlib (zipfile + expat): абзацы word/document.xml, текст из <w:t>.
+
+    Парсер expat, а не ElementTree, потому что только он даёт отклонить DTD:
+    легитимный .docx его не содержит, а вложенные сущности внутри DTD — billion laughs.
+    Каждый <w:p> на любой глубине даёт абзац, его текст включает вложенные <w:p>
+    (текстовые врезки) — так же, как раньше делал root.iter().
+    """
+    xml = _read_document_xml(path)
+    paragraphs, open_p, t_depth = [], [], 0
+
+    def start(name, attrs):
+        nonlocal t_depth
+        if name == _W_P:
+            open_p.append((len(paragraphs), []))
+            paragraphs.append(None)  # место в порядке документа, заполнится на закрытии
+        elif name == _W_T:
+            t_depth += 1
+
+    def end(name):
+        nonlocal t_depth
+        if name == _W_P and open_p:
+            index, chunks = open_p.pop()
+            paragraphs[index] = "".join(chunks)
+        elif name == _W_T and t_depth:
+            t_depth -= 1
+
+    def chars(data):
+        if t_depth:
+            for _, chunks in open_p:
+                chunks.append(data)
+
+    def reject_dtd(name, sysid, pubid, has_internal):
+        raise DocxError("в .docx есть DTD — отклонён (защита от entity-expansion)")
+
+    parser = expat.ParserCreate(namespace_separator=_NS_SEP)
+    parser.StartDoctypeDeclHandler = reject_dtd
+    parser.ExternalEntityRefHandler = lambda *args: 0
+    parser.StartElementHandler = start
+    parser.EndElementHandler = end
+    parser.CharacterDataHandler = chars
+    try:
+        parser.Parse(xml, True)
+    except expat.ExpatError as e:
+        raise DocxError(f"битый XML в word/document.xml ({e})") from e
+    return "\n".join(p for p in paragraphs if p is not None)
 
 def read_source(path):
     """Читает вход (.txt/.docx/.srt/.vtt) → (список строк, карта таймкодов); ошибки → exit 1."""
@@ -57,7 +126,7 @@ def read_source(path):
     if low.endswith(".docx"):
         try:
             return read_docx(path).splitlines(), {}
-        except (zipfile.BadZipFile, KeyError, ET.ParseError) as e:
+        except (zipfile.BadZipFile, KeyError, DocxError) as e:
             sys.exit(f"error: {path}: не удалось прочитать .docx ({e})")
     try:
         with open(path, encoding="utf-8") as f:

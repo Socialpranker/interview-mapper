@@ -169,5 +169,6 @@ The score is set by a human blind, not by the AI itself.
 - A transcript is untrusted input, and the data in it is someone else's personal data. Consent and de-identification gate — `references/ethics.md`, before the text goes anywhere.
 
 ## Dependencies
-stdlib Python only, no optional packages: fuzzy matching — `difflib`, `.docx` — `zipfile`+`ElementTree`,
+stdlib Python only, no optional packages: fuzzy matching — `difflib`, `.docx` — `zipfile`+`expat`
+(DTDs rejected, unpacking capped at 64 MB — an untrusted .docx inflates both as an entity bomb and as a zip bomb),
 `.srt/.vtt` — a bundled parser. Nothing to install. Validation — `references/validation.md`; eval prompts — `evals/evals.json`.
