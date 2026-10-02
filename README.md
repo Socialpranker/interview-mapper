@@ -31,7 +31,7 @@
 
 ## Why this exists
 
-"Summarize these interviews" pipelines quietly invent patterns and quotes. The failure modes are well documented: LLM-generated quotes are often **regenerated, not extracted** (~7.7% aren't in the source verbatim), **omissions outnumber fabrications**, a "quote" can be real yet **not support the claim it's attached to** (verbatim ≠ entailment), and subjective labels like eNPS **flip between runs** (LLM-as-judge flip-rate up to 56%).
+"Summarize these interviews" pipelines quietly invent patterns and quotes. The failure modes are well documented: LLM-generated quotes are often **regenerated, not extracted** (7.7–8.3% weren't verbatim in a 2024 study — mostly near-matches with dropped fillers or punctuation, which can still shift meaning), **omissions outnumber fabrications**, a "quote" can be real yet **not support the claim it's attached to** (verbatim ≠ entailment), and subjective labels like eNPS **flip between runs** (LLM-as-judge flip-rate up to 56%).
 
 Interview Mapper turns each of those into an explicit, auditable guardrail.
 

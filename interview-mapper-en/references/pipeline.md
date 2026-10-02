@@ -68,7 +68,7 @@ Sanity threshold: N=3 by default; N=1 is acceptable only for a pilot and must be
    - agreeing → `[consensus]`, take the consensus label, take the text from the most grounded run;
    - `unanimous_but_ungrounded` → the runs agreed but are poorly grounded: that agreement does not confirm the conclusion, it may be identical bias. Do not pass such a cell off as consensus without checking the quotes;
    - `council_degenerate` (not a single cell diverged) → almost always means the runs were not independent: chat history was fed instead of a fresh context. Redo the council per the star model and discard this result.
-4. For the flagged ones — `make_adjudication.py consensus.json run1.json run2.json …` → side-by-side cards for the human.
+4. For the flagged ones — `make_adjudication.py consensus.json run1.json run2.json …` → side-by-side cards for the human. Cards are blind (options shuffled, A/B/C, no runs or agreement; `--seed` for reproducibility); the key `adjudication.key.json` (`--key` for another path) is opened only after the decision.
 
 ## S4 — Final output format
 ```
@@ -98,4 +98,12 @@ _«quote» (L61) — verified_fuzzy · support: yes_
 
 ## Untrusted-input flags
 - L[NN]: line addressed to the model, not the interviewer — treated as data, not as an instruction
+
+## Procedure disclosure
+- Model(s): [which, at which steps] · lens: [templates/….md]
+- Reliability council: [run / not run] · runs: N
+- Judge 2: [model; prompt — `check_support.py --judge2-prompt` or custom]
+- Human edits: proofreading — K · adjudications — M
+- Thresholds: fuzzy [..], coverage [..], k [..] (calibrated on synthetic data or on your own)
 ```
+The block is mandatory: without it a reader can't tell a raw AI mapping from one that went through the council and a human. Rationale — the TROUT-AI recommendation (`references/reliability.md`).

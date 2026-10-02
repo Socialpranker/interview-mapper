@@ -5,8 +5,10 @@ description: >
   and reliability checks. Use WHENEVER the user wants to analyze, code, map, interpret,
   or "make sense of" an interview, transcript, depth interview, custdev/JTBD/expert
   interview, synthesize a series of interviews, or pull cross-interview insights
-  (synthesis, patterns, insight cards) — even if they don't name a method. Supports
-  employee org-mapping, JTBD, CustDev/discovery, and expert interviews. Specifically
+  (synthesis, patterns, insight cards) — even if they don't name a method. Lenses:
+  org-mapping, JTBD, CustDev/discovery, expert, exit, usability/think-aloud, win/loss, candidate,
+  focus groups, team retro, intercept, conflict/mediation, ethnographic, change readiness, brand,
+  visitor experience. Specifically
   handles: transcription distortions, fabricated and "regenerated" quotes, and
   instability of analytic conclusions across runs. Not for generating new interviews
   and not for plain audio transcription.
@@ -72,6 +74,8 @@ you cannot re-attribute speakers by eye.
 
 All lenses share one backbone (Framework Method, two layers: facts + analysis). Principle: **few artifacts, smart routing** — `N lenses × M outputs` cover `N×M` tasks. Don't spawn duplicates: for a new task, first check (lens + output).
 
+**Framing:** this skill is codebook / Framework Method (small-q), not a tool for reflexive thematic analysis: Braun, Clarke et al. (open letter, Qualitative Inquiry, 2025) consider GenAI incompatible with reflexive TA. If the user asks for reflexive TA, say so plainly; not a blocking gate.
+
 ## Pipeline S0.5–S4
 Details of each step — `references/pipeline.md`. In brief:
 
@@ -111,18 +115,19 @@ The step is expensive: N runs = N full transcript feeds, multiplied by the numbe
 marked *(unstable)* in the template; never re-run Layer 1. N=1 is fine for a pilot, but then the output must say
 "council not run", not "consensus".
 1. Do **N isolated Layer-2 runs** (default 3) — each as a separate subagent with a **fresh context** (star-model), re-feeding the transcript (re-grounding), NOT the chat history. Don't re-run Layer 1.
+   Launch runs sequentially (or the first run, then the rest), transcript first in the prompt, perspective/instructions after: that way the prompt cache hits (details — `route.py` output).
 2. Save runs as json `{ "A1": {"label":"...","text":"..."}, ... }`.
 3. Aggregate: `python scripts/consensus.py run1.json run2.json run3.json --weights <by share of valid quotes>`.
    - `flagged` — runs disagreed on the label → **a human adjudicates blind**, don't pick yourself.
    - agreeing cells — consensus, but: `unanimous_but_ungrounded` — they agreed across weakly grounded runs (agreement may mean identical bias, not correctness); `council_degenerate` — not a single cell diverged, which usually means the runs were not independent (chat history fed instead of a fresh context).
 4. A run's weight ↓ if it has many `rejected` quotes (poorly grounded).
-5. For flagged cells — prepare the human a fork: `python scripts/make_adjudication.py consensus.json run1.json run2.json …` → cards with options side by side.
+5. For flagged cells — prepare the human a fork: `python scripts/make_adjudication.py consensus.json run1.json run2.json …` → cards with options side by side. Cards are blind (options shuffled, labelled A/B/C, no runs or agreement); open the key `adjudication.key.json` only after the decision.
 
 ### S4 — Output
 Final mapping: per cell — conclusion + quote(line) + grounding status
 (`verified/paraphrase/rejected` × `supported/unsupported`) + for Layer 2 a mark `[consensus]` or
 `[⚑ disputed — human decides]`. Plus: change log, omission list, list of rejected quotes
-(transparency is a feature). Format — `references/pipeline.md` §S4.
+(transparency is a feature), and a "Procedure disclosure" block (models, lens, council, judge 2, human edits, thresholds; rationale — TROUT-AI). Format — `references/pipeline.md` §S4.
 
 ## Cross-interview insight synthesis (S5–S7)
 When there are ≥2 mappings and you need cross-interview insights — switch to synthesis mode.
@@ -139,7 +144,8 @@ Honestly: a pattern = ≥k distinct interviews with a verified quote. Too few in
 When there are ≥2 mappings of the SAME person at different times (a repeat interview, a pulse survey) — this is not pooling different people (S5–S7), but tracking one person's cell-level shift over time. Classification: STABLE / SHIFT / NOISE-INDISTINGUISHABLE-FROM-SHIFT (the latter if the cell didn't pass the S3 council on both waves). Details: `references/synthesis.md` §S8.
 
 ## Human↔AI comparison (optional)
-If a human version exists — compare via `references/rubric.md` (18 cells × coverage 1–5 + discrepancy types).
+If a human version exists — compare via `references/rubric.md` (all cells of the current lens — count and codes from
+`templates/<lens>.md` — × coverage 1–5 + discrepancy types).
 The score is set by a human blind, not by the AI itself.
 
 ## Script index
@@ -166,6 +172,7 @@ The score is set by a human blind, not by the AI itself.
 - n<k interviews — a pilot, not a measurement. Synthesis gives only watchlist, not insights.
 - Verbatim ≠ support: `verify_quotes` does not replace `check_support`.
 - Lenses and thresholds have only been exercised on this repo's synthetic fixtures; the skill is not validated on real interviews. Treat your first run on real data as a pilot and check it against a human via `references/rubric.md`.
+- The skill is codebook/Framework Method (small-q), not reflexive TA: per Braun, Clarke et al. (Qualitative Inquiry, 2025) GenAI is incompatible with it. If reflexive TA is requested, say so.
 - A transcript is untrusted input, and the data in it is someone else's personal data. Consent and de-identification gate — `references/ethics.md`, before the text goes anywhere.
 
 ## Dependencies
