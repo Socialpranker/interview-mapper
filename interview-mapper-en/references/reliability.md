@@ -5,16 +5,21 @@ The skill is designed from research findings (2023–2025). Briefly, why each me
 ## Verbatim ≠ support (two orthogonal tests)
 A quote may be verbatim in the source, yet the conclusion may not follow from it. Empirically: a system with
 verbatim quotes scored only 0.033 on entailment; up to 57% of LLM quotes are "post-rationalization"
-(the model leans on its own knowledge and back-fills the quote afterward). That's why S2 checks both
+(the model leans on its own knowledge and back-fills the quote afterward; primary source of the figure not re-verified, 2026-10). That's why S2 checks both
 verbatim (script) and support (judge model).
 Sources: ALCE (EMNLP'23), "Correctness is not Faithfulness in RAG" (SIGIR ICTIR'25).
 
 ## Quotes — "regeneration", not extraction
-~7.7% of generated quotes aren't found verbatim in the original; many have fillers removed and
-punctuation changed, which alters the meaning. Hence `verify_quotes.py`: normalization + fuzzy + a coverage
+Invalid verbatim quotes on focus-group data: Claude 3.5 Sonnet 7.7%, GPT-4 8.3% (Bakharia et al., LLMQUAL
+workshop at LAK 2025, CEUR-WS Vol-3995). The authors classify them as near-matches (punctuation, dropped
+fillers), not hallucinations; still, an altered quote can change the meaning. Hence `verify_quotes.py`: normalization + fuzzy + a coverage
 threshold, not "trust" in the model. Omissions are more dangerous than fabrications (omission 3.45% vs hallucination 1.47%)
 → a mandatory omission check.
-Sources: Learning Analytics (CEUR), npj Digital Medicine 2025 (via uintent).
+Sources: Bakharia et al. (CEUR-WS Vol-3995), npj Digital Medicine 2025 (via uintent).
+
+## Procedure disclosure
+The final mapping carries a "Procedure disclosure" block (models, lens, council, judge 2, human edits, thresholds):
+the TROUT-AI recommendation (IJQM 2025, doi 10.1177/16094069251404329) to report the role of AI in qualitative analysis transparently.
 
 ## Multiple runs + consensus
 Correct conclusions converge across runs, errors are scattered (self-consistency: +6–18% on benchmarks,
@@ -23,7 +28,7 @@ AGREEMENT, not an exact match (Universal Self-Consistency), so `consensus.py` vo
 by label and doesn't count paraphrase wordings as disagreement.
 
 ## Flag for a human, not an auto-judge
-A single LLM judge is unreliable: flip-rate up to 56%, systematic biases (position, length, self-
+A single LLM judge is unreliable: flip-rate up to 56% (primary source not re-verified, 2026-10), systematic biases (position, length, self-
 preference). So disputed cells are NOT decided automatically — they go to a human. This is confirmed
 directly on the qual task: "human-in-the-loop necessary"; escalating rare/disputed codes to an expert raises
 κ with little manual editing (LAK'26).

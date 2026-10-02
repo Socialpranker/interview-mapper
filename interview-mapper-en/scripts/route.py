@@ -83,7 +83,12 @@ def cost_estimate(n, council_runs, synthesis_reruns, avg_lines):
         "note": ("An order of magnitude, not a bill: it counts transcript feeds, not real tokens. "
                  "The main lever is council_runs: S3 is needed ONLY for the Layer 2 cells marked "
                  "(unstable). N=1 is fine for a pilot, but then the output must say \"council not "
-                 "run\" rather than \"consensus\"."),
+                 "run\" rather than \"consensus\". Prompt caching: the first feed is full price (cache "
+                 "write 1.25×), each later feed of the same transcript costs ~0.05–0.1× the input price "
+                 "(0.05× Opus 5.5, 0.1× Sonnet 5.5/Haiku 4.5; as of 2026-10) — but only if the runs are "
+                 "SEQUENTIAL (a cache entry becomes available once the first response begins), the "
+                 "transcript is at the START of the subagent prompt (identical prefix), and the same "
+                 "model is used (the cache is per model). Parallel runs get no cache hits."),
     }
 
 
