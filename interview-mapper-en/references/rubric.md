@@ -21,12 +21,12 @@ Each cell of the chosen lens (e.g., 18 for org mapping, K1–K7 for candidate). 
 - **[R]** frame mismatch (theme assigned to the wrong column / different level of generalization).
 
 ## What to record
-**Run↔run (Experiment 1, proofreading effect/variance):** did the cell shift, the type, did the CONCLUSION change (not the wording). Bottom line — the share of cells where the meaning moved.
+**Run↔run (Experiment 1, proofreading effect/variance):** did the cell shift, the type, did the conclusion change (not the wording). Bottom line — the share of cells where the meaning moved.
 
 **Human↔AI (Experiment 2):** for each cell, the winner (human/AI/parity) + the loser's divergence type. Separately: where the AI hallucinates, where the human didn't make the analytical conclusion.
 
 ## Per-cell Δ
-Aggregate Δ by cell of the CURRENT lens, as in the "FINAL COMPARISON" template. The number and names of cells come from the lens template (`templates/<lens>.md`), not fixed.
+Aggregate Δ by cell of the current lens, as in the "FINAL COMPARISON" template. The number and names of cells come from the lens template (`templates/<lens>.md`), not fixed.
 
 | Cell | Avg. Δ AI↔Human | Main divergences/agreements |
 |---|---|---|
@@ -47,4 +47,4 @@ The score in a human↔AI comparison is set by a **human, blind** (not knowing w
 
 ## Separate variance from effect
 A single A/B run confuses "proofreading effect" and "the model's run-to-run variance". To separate them strictly —
-≥3 runs of each version, measure which cells flip with the transcript UNCHANGED (that is the variance).
+≥3 runs of each version, measure which cells flip with the transcript unchanged (that is the variance).

@@ -1,17 +1,17 @@
 # People's data: consent, de-identification, limits of use
 
 The skill works with specific people talking about their job, their resignation, a conflict, a hiring
-decision. That is personal data, and some lenses additionally feed decisions ABOUT those people. Below is
+decision. That is personal data, and some lenses additionally feed decisions about those people. Below is
 the gate to clear in S0, before the transcript goes anywhere. This is working discipline, not legal advice:
 the regulatory regime (GDPR, local data-protection law, sector rules) is your counsel's call, not this file's.
 
 ## The S0 gate — three questions before you start
 
 1. **Does the respondent consent** to recording, transcription and analysis — and does that consent cover
-   THIS analysis? Consent to "a recording for the minutes" is not consent to an LLM pipeline and to being
+   this analysis? Consent to "a recording for the minutes" is not consent to an LLM pipeline and to being
    quoted in a stakeholder report. No clear answer → don't start, ask the client.
 2. **Where the text goes.** The whole transcript travels to the model, and in S3 once per run. If the material
-   must not leave your perimeter, that is settled BEFORE S1 (local model, de-identification, or declining),
+   must not leave your perimeter, that is settled before S1 (local model, de-identification, or declining),
    not after.
 3. **Is de-identification required** — and to what degree. Default for sensitive lenses: de-identify.
 
@@ -28,7 +28,7 @@ the coherence, and the mapping table is stored apart from the transcript and nev
 - Rare biographical details (illness, family composition, criminal record, religion), especially ones dropped
   in passing: they are almost never needed by a cell and almost always identify.
 
-What NOT to de-identify: the substance of the problem, the sequence of events, process numbers — otherwise the
+What not to de-identify: the substance of the problem, the sequence of events, process numbers — otherwise the
 mapping loses its point.
 
 **Pseudonymization ≠ anonymization.** Five interviews from an eight-person department de-anonymize each other
@@ -50,7 +50,7 @@ against exactly that. De-identify after mapping and the quotes stop matching the
   beliefs) are not coded at all, even when voiced.
 - **exit** — a leaver is exposed, and their words often concern third parties who never consented. Quotes about
   named managers do not go into the report by name.
-- **conflict-mediation** — each side is mapped separately and is NOT shown to the other side without explicit
+- **conflict-mediation** — each side is mapped separately and is not shown to the other side without explicit
   consent; the mediator decides what to disclose. One side's position retold in the other's words is not mapping.
 - **team-retro / focus-group** — participants heard each other, but did not agree to be quoted outside; the
   report uses roles, not names, by default.
