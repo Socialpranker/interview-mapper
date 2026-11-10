@@ -1,7 +1,7 @@
 # S0 — Intake "Goal survey" (adaptive, before choosing the lens)
 
-Goal: don't guess, route. The pipeline depends on the GOAL and WHO was interviewed — these two axes
-set the lens (how to extract) and the output (what to build). Ask the MINIMUM, then more only as needed.
+Goal: don't guess, route. The pipeline depends on the goal and who was interviewed — these two axes
+set the lens (how to extract) and the output (what to build). Ask the minimum, then more only as needed.
 
 ## Adaptive survey (not a long questionnaire)
 **Always (2 questions — in 90% of cases they already determine the lens):**
@@ -14,7 +14,7 @@ set the lens (how to extract) and the output (what to build). Ask the MINIMUM, t
 5. **Is there a human baseline** to compare against (enables comparison by Δ 1–5).
 
 **Always, when the material is sensitive** (exit, conflict, candidate, medical/HR — treat these as sensitive by default):
-6. **Consent and de-identification** — does the respondent's consent cover THIS kind of processing, and must the text be de-identified before S1? Full gate — `references/ethics.md`. De-identify BEFORE `number_lines.py`, or the quotes stop matching the source.
+6. **Consent and de-identification** — does the respondent's consent cover this kind of processing, and must the text be de-identified before S1? Full gate — `references/ethics.md`. De-identify before `number_lines.py`, or the quotes stop matching the source.
 
 Ask the user these questions (in Cowork — via option selection). Don't start mapping until axis-1 and axis-2 are clear.
 
@@ -50,7 +50,7 @@ labeled) — without it, coding can't proceed; this is an S1 blocker, not someth
 The unit of coding there is the turn + speaker + position in the group, not an isolated statement.
 
 ## Conflict/mediation — special case
-Respondent = "party to a conflict": EACH party is mapped in a SEPARATE file (don't mix them into one
+Respondent = "party to a conflict": each party is mapped in a separate file (don't mix them into one
 document) — comparing positions/interests only happens at the synthesis stage, checked manually by the mediator.
 The interviewer must stay neutral; cell A2 (interest compatibility) is high-stakes and requires
 human review before use in negotiations — see `templates/conflict-mediation.md`.

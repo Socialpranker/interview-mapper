@@ -24,12 +24,12 @@ the TROUT-AI recommendation (IJQM 2025, doi 10.1177/16094069251404329) to report
 ## Multiple runs + consensus
 Correct conclusions converge across runs, errors are scattered (self-consistency: +6–18% on benchmarks,
 ICLR'23). Multi-agent debate reduces hallucinations (ICML'24). But consensus for open text is
-AGREEMENT, not an exact match (Universal Self-Consistency), so `consensus.py` votes
+agreement, not an exact match (Universal Self-Consistency), so `consensus.py` votes
 by label and doesn't count paraphrase wordings as disagreement.
 
 ## Flag for a human, not an auto-judge
 A single LLM judge is unreliable: flip-rate up to 56% (primary source not re-verified, 2026-10), systematic biases (position, length, self-
-preference). So disputed cells are NOT decided automatically — they go to a human. This is confirmed
+preference). So disputed cells are not decided automatically — they go to a human. This is confirmed
 directly on the qual task: "human-in-the-loop necessary"; escalating rare/disputed codes to an expert raises
 κ with little manual editing (LAK'26).
 

@@ -13,7 +13,7 @@ Schema (`nuggets.json`, a list):
  "quote":"they call me at night...","line":135,
  "verified":true, "severity":4, "valence":"-", "cluster":null}
 ```
-- `verified` — did the quote pass through `verify_quotes.py` (use ONLY verified nuggets as evidence of a pattern).
+- `verified` — did the quote pass through `verify_quotes.py` (use only verified nuggets as evidence of a pattern).
 - `severity` 1–5 — criticality/impact (set by the model, justify it).
 - `valence` `+`/`-`/`0` — sign (needed for tension detection).
 - `role` — mandatory: insights are scoped by role.
@@ -22,19 +22,19 @@ Schema (`nuggets.json`, a list):
 The `score_insights.py` script depends on these fields — garbage in gives garbage in scoring. Set them with justification:
 - **severity 1–5** — impact on the organization's/user's goal: 5 = blocker/systemic risk; 4 = major pain; 3 = noticeable friction; 2 = inconvenience; 1 = cosmetic.
 - **valence** — the sign of the attitude in the nugget: `+` (works/values/for), `-` (pain/against/broken), `0` (neutral fact).
-Valence is needed for tension detection: the same cluster with `+` for one role and `-` for another = TENSION.
+Valence is needed for tension detection: the same cluster with `+` for one role and `-` for another = tension.
 
 ## S6 — Clustering (affinity, done by the model)
 Group nuggets by semantic themes, assign each a `cluster`. Rules:
 - **Count different interviews, not quotes.** One person who repeated a thought three times is not a pattern.
-- Don't merge opposing positions into one cluster — if roles diverge, that's a TENSION (more valuable than consensus), mark it with valence.
+- Don't merge opposing positions into one cluster — if roles diverge, that's a tension (more valuable than consensus), mark it with valence.
 - A cluster is not "a theme in general" but a specific regularity.
 
 ## S6.5 — Accounting for reliability (script, not by eye)
 `python scripts/score_insights.py nuggets.json --k 3`
 Computes per cluster: distinct interviews, triangulation (≥k different interviews with a verified quote), frequency×criticality, tension, status:
 - **insight** — triangulated (≥k sources) → can be called a pattern.
-- **watchlist** — rare but critical (severity≥4) OR cross-role tension → don't bury.
+- **watchlist** — rare but critical (severity≥4) or cross-role tension → don't bury.
 - **weak** — a single source, low criticality → anecdote, not a pattern.
 If N interviews is small (<k) — be honest: there will be no patterns, only watchlist. Don't pass off watchlist as an insight.
 
@@ -57,8 +57,8 @@ Implication / recommendation: [what to do; for whom]
 ```
 
 Card honesty rules:
-- No verified quotes from ≥k different interviews → this is NOT an insight, mark it "watchlist / needs more interviews".
-- Every card goes through counter-evidence: actively look for who did NOT confirm and who contradicts.
+- No verified quotes from ≥k different interviews → this is not an insight, mark it "watchlist / needs more interviews".
+- Every card goes through counter-evidence: actively look for who did not confirm and who contradicts.
 - "Silence" (not everyone asked raised the theme) — is also a signal, record it.
 - An insight is always scoped: "for collections staff", not "for employees".
 
@@ -70,7 +70,7 @@ Sort: first `insight` by (frequency×criticality), then `watchlist` (including t
 
 ## S8 — Longitudinal / panel analysis (the same person, N waves)
 
-A separate axis on top of S5–S7, not a replacement: applies when there are **≥2 mappings of the SAME
+A separate axis on top of S5–S7, not a replacement: applies when there are **≥2 mappings of the same
 person**, taken at different times (wave 1, wave 2, …) using the same lens. The task is not "reconcile
 different people into a pattern" (that's S5–S7), but to capture **how one person's position changed over
 time**.
@@ -78,8 +78,8 @@ time**.
 ### When to apply
 - A repeat interview with the same employee/customer/expert months apart (e.g. before and after a change,
   or a quarterly pulse survey of the same panel of respondents).
-- Don't confuse this with S3 (reliability pass) — there N runs of the AI go over ONE AND THE SAME transcript
-  at a single point in time; here N TRANSCRIPTS of one person exist at DIFFERENT points in time.
+- Don't confuse this with S3 (reliability pass) — there N runs of the AI go over one and the same transcript
+  at a single point in time; here N transcripts of one person exist at different points in time.
 
 ### Schema (`panel.json`, a list keyed by person)
 ```json
@@ -90,14 +90,14 @@ time**.
  ]}
 ```
 - `person_id` — a stable identifier for the person across waves (not their name in the open, if anonymization is needed).
-- Comparison is done PER CELL (the same lens cell across different waves), not interview-by-interview as a whole.
+- Comparison is done per cell (the same lens cell across different waves), not interview-by-interview as a whole.
 
 ### Steps
 1. **Match cells across waves** — for each cell of Layer 2 (analytical, unstable) belonging to a person: value in wave N vs wave N+1.
 2. **Classify the shift**:
    - **STABLE** — the value didn't change between waves.
-   - **SHIFT** — it changed; pull a quote from BOTH waves showing the difference, and (if available) the reason for the shift in the respondent's own words from wave N+1 ("what's changed since last time").
-   - **NOISE vs REAL SHIFT** — if a cell is unstable even WITHIN a single wave (S3-flagged), don't conclude there's a shift between waves until the S3 pass has been run on both waves separately — otherwise you'll mistake method variance for real change.
+   - **SHIFT** — it changed; pull a quote from both waves showing the difference, and (if available) the reason for the shift in the respondent's own words from wave N+1 ("what's changed since last time").
+   - **NOISE vs REAL SHIFT** — if a cell is unstable even within a single wave (S3-flagged), don't conclude there's a shift between waves until the S3 pass has been run on both waves separately — otherwise you'll mistake method variance for real change.
 3. **Panel-level aggregation (if ≥3 people each have ≥2 waves)** — count how many people shifted in the same direction on the same cell; this is a separate, stronger signal than a single person's shift.
 4. **Don't confuse a trend with regression to the mean** — a single sharp outlier in wave 1 (e.g. right after an incident) followed by a "calmer" value in wave 2 may not be a real change in position but a natural regression; flag this as an alternative hypothesis, don't silently discard it.
 
@@ -114,4 +114,4 @@ Alternative hypothesis: [regression to the mean / external event / method artifa
 ### Limitation
 Panel analysis on latent cells (eNPS, forecast, recognition) is doubly unreliable — they're unstable even
 within a single wave (see S3), and comparing two unstable points can produce a false "shift". Don't conclude
-a position has changed based on a single latent cell without an S3 pass on EACH wave.
+a position has changed based on a single latent cell without an S3 pass on each wave.

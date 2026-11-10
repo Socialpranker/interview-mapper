@@ -11,7 +11,7 @@ The only threshold documented in the primary sources is difflib 0.6; the rest is
 ## Calibrating the verbatim threshold
 1. Assemble a **gold-set** manually: 15–40 examples `{"quote":"…","is_verbatim":true/false}`.
    - true: the quote is really in the source (including with ASR noise).
-   - false: a fabrication OR a heavy "regeneration" (words removed such that the meaning shifted).
+   - false: a fabrication or a heavy "regeneration" (words removed such that the meaning shifted).
    - **The most valuable are near-misses**: real quotes with fillers/punctuation removed (regenerations). On easy fabrications any threshold gives F1=1.0 and calibrates nothing.
 2. `python scripts/calibrate_threshold.py --transcript T.txt --gold gold.json [--prefer-precision]`
 3. Take the recommended threshold. For mapping, **precision** usually matters more (fewer false "verified" quotes) → `--prefer-precision`.
@@ -26,7 +26,7 @@ Test prompts — in `evals/evals.json`.
 
 ## Separate variance from effect (important!)
 A single A/B run confuses "proofreading effect" and "the model's run-to-run variance". To separate them:
-- run ONE transcript version 3–5 times, count which Layer 2 cells flip with the text unchanged — that's pure variance;
+- run one transcript version 3–5 times, count which Layer 2 cells flip with the text unchanged — that's pure variance;
 - only then compare raw vs proofread. The difference beyond variance = the proofreading effect.
 
 ## Honest status
@@ -43,8 +43,8 @@ honest status line is "not validated on real data", not "F1 = 1.00".
 
 The minimal pilot — one interview, one person, half a day:
 
-1. Take a REAL transcript (not tidied up for looks) and a human mapping made with the same lens, independently
-   and BEFORE the skill run. No human version — make it first, or there is nothing to compare against; knowing
+1. Take a real transcript (not tidied up for looks) and a human mapping made with the same lens, independently
+   and before the skill run. No human version — make it first, or there is nothing to compare against; knowing
    the AI's output spoils the baseline irreversibly.
 2. Run S1–S2 in full. Record three numbers: the share of `rejected` quotes, the number of `dangerous` verdicts
    from `check_support.py`, and the number of omissions found on the counterfactual pass.
