@@ -127,8 +127,10 @@ def main():
     else:
         n_iv = summary.get("total_interviews", "?")
     sub = f"кластеров: {len(clusters)} · интервью: {n_iv} · сплошная=инсайт, тонкая=watchlist, пунктир=weak"
-    htmlout = TPL.format(title=html.escape(a.title), sub=html.escape(str(sub)),
-                         data=json.dumps(clusters, ensure_ascii=False))
+    # Цитаты из интервью могут содержать "</script>" или "<!--": в JSON внутри <script> экранируем <, >, &.
+    data_js = (json.dumps(clusters, ensure_ascii=False)
+               .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"))
+    htmlout = TPL.format(title=html.escape(a.title), sub=html.escape(str(sub)), data=data_js)
     open(a.out, "w", encoding="utf-8").write(htmlout)
     print(f"Борд: {len(clusters)} карточек → {a.out}")
 
